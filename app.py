@@ -24,7 +24,8 @@ ANTHROPIC_API_KEY = st.secrets["ANTHROPIC_API_KEY"]
 SERPER_API_KEY    = st.secrets["SERPER_API_KEY"]
 HUNTER_API_KEY    = st.secrets["HUNTER_API_KEY"]
 
-SENT_LOG_FILE = "sent_log.json"
+SENT_LOG_FILE         = "sent_log.json"
+SEEN_COMPANIES_FILE   = "seen_companies.json"
 
 # ================================================================
 # PAGE SETUP
@@ -110,6 +111,48 @@ def already_sent(company_name: str) -> bool:
     return any(e.get("company") == company_name for e in load_sent_log())
 
 # ================================================================
+# SEEN COMPANIES  (cross-session deduplication)
+# ================================================================
+def load_seen_companies() -> list:
+    try:
+        if os.path.exists(SEEN_COMPANIES_FILE):
+            with open(SEEN_COMPANIES_FILE) as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return []
+
+def is_recently_seen(website: str, days: int) -> bool:
+    if not website or days == 0:
+        return False
+    cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    for e in load_seen_companies():
+        if (e.get("website","").lower() == website.lower()
+                and e.get("date_found","") >= cutoff):
+            return True
+    return False
+
+def add_to_seen_log(companies: list):
+    existing      = load_seen_companies()
+    existing_sites = {e.get("website","").lower() for e in existing}
+    today         = datetime.now().strftime("%Y-%m-%d")
+    for c in companies:
+        site = c.get("website","").lower()
+        if site and site not in existing_sites:
+            existing.append({
+                "website"      : c.get("website",""),
+                "company_name" : c.get("company_name",""),
+                "vertical"     : c.get("vertical",""),
+                "date_found"   : today,
+            })
+            existing_sites.add(site)
+    try:
+        with open(SEEN_COMPANIES_FILE, "w") as f:
+            json.dump(existing, f, indent=2)
+    except Exception:
+        pass
+
+# ================================================================
 # PASSWORD GATE
 # ================================================================
 def login_page():
@@ -152,6 +195,22 @@ with st.sidebar:
     if new_sig != st.session_state["signature"]:
         st.session_state["signature"] = new_sig
         st.success("Signature saved!")
+
+    st.markdown("---")
+    st.markdown("**🔄 Deduplication Window**")
+    st.caption("Skip companies already found within:")
+    dedup_days = st.selectbox(
+        "dedup", [7, 14, 30, 60, 90, 0],
+        index=2,
+        format_func=lambda x: f"{x} days" if x > 0 else "Off (show all)",
+        label_visibility="collapsed",
+        key="dedup_days",
+    )
+
+    # Show seen companies count
+    seen_total = len(load_seen_companies())
+    if seen_total:
+        st.caption(f"📋 {seen_total} companies in history log")
 
     st.markdown("---")
 
@@ -538,16 +597,22 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
             st.session_state[subj_key] = r.get("email_subject","")
         subject = st.text_input("Subject line", key=subj_key)
 
-        # Body — pre-fill with draft + signature on first open
+        # Body — draft only, NO signature baked in (signature added live below)
         body_key = f"body_{key_prefix}_{hash(website_raw)}"
         if body_key not in st.session_state:
-            sig = st.session_state.get("signature","")
-            draft = r.get("email_body","")
-            st.session_state[body_key] = draft + ("\n\n" + sig if sig else "")
-        body = st.text_area("Email body (fully editable)", key=body_key, height=260)
+            st.session_state[body_key] = r.get("email_body","")
+        body = st.text_area("Email body (fully editable)", key=body_key, height=220)
 
-        if not st.session_state.get("signature"):
-            st.caption("💡 Tip: add your signature in the **Settings** panel on the left.")
+        # Signature — always reflects current sidebar value, never baked into body
+        sig = st.session_state.get("signature","")
+        if sig:
+            st.markdown("**✍️ Signature** *(edit in Settings panel)*")
+            st.code(sig, language=None)
+        else:
+            st.caption("💡 Add your signature in the ⚙️ **Settings** panel on the left — it will appear here automatically.")
+
+        # Full email = body + signature (combined only for sending)
+        full_email = body + ("\n\n" + sig if sig else "")
 
         # ── 3 action buttons ──
         a1, a2, a3 = st.columns(3)
@@ -556,7 +621,7 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
         if email_raw:
             mailto = ("mailto:" + email_raw
                       + "?subject=" + urllib.parse.quote(subject)
-                      + "&body="    + urllib.parse.quote(body))
+                      + "&body="    + urllib.parse.quote(full_email))
             a1.link_button("📨 Open in Email Client", mailto, use_container_width=True)
         else:
             a1.info("No email found")
@@ -679,7 +744,10 @@ if search_clicked:
         if not results:
             continue
         companies = analyse_companies(client, results, v, query, region_label)
-        new       = [c for c in companies if c.get("website","") not in seen_sites]
+        dedup     = st.session_state.get("dedup_days", 30)
+        new       = [c for c in companies
+                     if c.get("website","") not in seen_sites
+                     and not is_recently_seen(c.get("website",""), dedup)]
         for c in new:
             seen_sites.add(c.get("website",""))
         all_companies.extend(new)
@@ -698,6 +766,9 @@ if search_clicked:
     progress_bar.progress(100)
     status_box.success(f"✅ Done! **{len(final)} reseller candidates** found with contact details.")
     log_box.empty()
+
+    # Save to seen-companies log so future searches skip these
+    add_to_seen_log(final)
 
     # Store results in session so they survive reruns (e.g. mark-as-sent buttons)
     st.session_state["last_results"] = final
