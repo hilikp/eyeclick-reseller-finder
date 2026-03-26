@@ -1,0 +1,7 @@
+# NEVER upload these to GitHub
+.streamlit/secrets.toml
+*.xlsx
+*.pyc
+__pycache__/
+.env
+keys.txt
