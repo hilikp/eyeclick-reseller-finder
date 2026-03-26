@@ -356,9 +356,22 @@ def hunter_search(domain: str) -> dict:
         emails = r.json().get("data", {}).get("emails", [])
         if not emails:
             return {}
-        priority = ["CEO","Chief Executive","President","Managing Director","Founder","VP Sales","Vice President"]
+        # Strict C-level / owner priority — Sales Manager and below are last resort
+        priority = [
+            "Owner", "Co-Founder", "Founder", "CEO", "Chief Executive",
+            "President", "Managing Director", "Managing Partner",
+            "VP Sales", "VP Business", "Vice President", "Director of Sales",
+            "Sales Director", "Commercial Director", "Head of Sales",
+            "General Manager", "Country Manager", "Regional Manager",
+        ]
+        low_level = ["Sales Manager","Account Manager","Sales Representative",
+                     "Sales Executive","Business Development Manager","BDM"]
         def score(e):
             pos = (e.get("position") or "").upper()
+            # Penalise low-level roles heavily
+            for lw in low_level:
+                if lw.upper() in pos:
+                    return (-1, e.get("confidence",0))
             for i, kw in enumerate(priority):
                 if kw.upper() in pos:
                     return (len(priority)-i, e.get("confidence",0))
@@ -457,7 +470,7 @@ def build_excel(rows: list) -> bytes:
 # ================================================================
 # RESULT CARD v2.0
 # ================================================================
-def result_card(r: dict, idx: int):
+def result_card(r: dict, idx: int, key_prefix: str = "all"):
     contact          = r.get("contact", {})
     vertical         = r.get("vertical","")
     badge_cls        = f"badge-{vertical.lower()}"
@@ -520,13 +533,13 @@ def result_card(r: dict, idx: int):
     with st.expander(f"{email_label} · {company_name_raw}"):
 
         # Subject
-        subj_key  = f"subj_{hash(website_raw)}"
+        subj_key  = f"subj_{key_prefix}_{hash(website_raw)}"
         if subj_key not in st.session_state:
             st.session_state[subj_key] = r.get("email_subject","")
         subject = st.text_input("Subject line", key=subj_key)
 
         # Body — pre-fill with draft + signature on first open
-        body_key = f"body_{hash(website_raw)}"
+        body_key = f"body_{key_prefix}_{hash(website_raw)}"
         if body_key not in st.session_state:
             sig = st.session_state.get("signature","")
             draft = r.get("email_body","")
@@ -550,7 +563,7 @@ def result_card(r: dict, idx: int):
 
         # Mark as sent + set follow-up
         if not sent:
-            if a2.button("✅ Mark as Sent + Reminder", key=f"mark_{hash(website_raw)}", use_container_width=True):
+            if a2.button("✅ Mark as Sent + Reminder", key=f"mark_{key_prefix}_{hash(website_raw)}", use_container_width=True):
                 fu_date = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
                 append_sent_log({
                     "company"        : company_name_raw,
@@ -574,8 +587,8 @@ def result_card(r: dict, idx: int):
         if sent:
             st.markdown("---")
             st.markdown("**🔄 Send Follow-up Email**")
-            fu_subj_key = f"fu_subj_{hash(website_raw)}"
-            fu_body_key = f"fu_body_{hash(website_raw)}"
+            fu_subj_key = f"fu_subj_{key_prefix}_{hash(website_raw)}"
+            fu_body_key = f"fu_body_{key_prefix}_{hash(website_raw)}"
             if fu_subj_key not in st.session_state:
                 st.session_state[fu_subj_key] = f"Following up: {subject}"
             if fu_body_key not in st.session_state:
@@ -597,7 +610,7 @@ def result_card(r: dict, idx: int):
                              + "&body="    + urllib.parse.quote(fu_body))
                 b1, b2 = st.columns(2)
                 b1.link_button("📨 Open Follow-up in Email Client", fu_mailto, use_container_width=True)
-                if b2.button("✅ Mark Follow-up Sent", key=f"fu_done_{hash(website_raw)}", use_container_width=True):
+                if b2.button("✅ Mark Follow-up Sent", key=f"fu_done_{key_prefix}_{hash(website_raw)}", use_container_width=True):
                     mark_followup_done(company_name_raw)
                     st.success("Follow-up marked as done!")
                     st.rerun()
@@ -707,14 +720,14 @@ if final:
 
     with tabs[0]:
         for i, r in enumerate(final, 1):
-            result_card(r, i)
+            result_card(r, i, key_prefix="all")
 
     for tab, vertical in zip(tabs[1:], ["Healthcare","Education","Entertainment"]):
         with tab:
             vlist = groups[vertical]
             if vlist:
                 for i, r in enumerate(vlist, 1):
-                    result_card(r, i)
+                    result_card(r, i, key_prefix=vertical.lower())
             else:
                 st.info(f"No {vertical} companies found in this search.")
 
