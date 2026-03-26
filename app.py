@@ -383,8 +383,7 @@ def result_card(r: dict, idx: int):
 
     email_html = (f'<a href="mailto:{e(email_raw)}" style="color:#0057A8;">{e(email_raw)}</a>'
                   if email_raw else "—")
-    li_html    = (f'<a href="{e(linkedin_raw)}" target="_blank" style="color:#0057A8;">🔗 LinkedIn</a>'
-                  if linkedin_raw and linkedin_raw.startswith("http") else "")
+    has_linkedin = linkedin_raw and linkedin_raw.startswith("http")
     country_html  = (f'&nbsp;<span style="color:#666;font-size:.85rem;">🌐 {country}</span>'
                      if country else "")
     conf_html     = (f'<span style="color:#888;">{confidence} confidence</span>'
@@ -407,10 +406,12 @@ def result_card(r: dict, idx: int):
         <span>👤 <strong>{contact_name}</strong>{(' · ' + contact_title) if contact_title else ''}</span>
         <span>📧 {email_html}</span>
         {conf_html}
-        {('<span>' + li_html + '</span>') if li_html else ''}
       </div>
     </div>
     """, unsafe_allow_html=True)
+
+    if has_linkedin:
+        st.markdown(f'&nbsp;&nbsp;&nbsp;[🔗 LinkedIn]({linkedin_raw})', unsafe_allow_html=True)
 
     with st.expander(f"✉️  View draft email for {r.get('company_name','')}"):
         st.markdown(f"**Subject:** {r.get('email_subject','')}")
