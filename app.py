@@ -370,7 +370,7 @@ Return JSON with key "companies" → array of:
   "fit_reason"   : "Why they could resell EyeClick (2-3 sentences).",
   "contact_role" : "CEO / VP Sales / Managing Director",
   "email_subject": "Compelling outreach subject line",
-  "email_body"   : "Personalised 150-200 word outreach email. Sign off as EyeClick Business Development team."
+  "email_body"   : "Personalised 150-200 word outreach email. Do NOT include any sign-off or signature — end the body naturally before the closing."
 }}
 
 Include all real companies with fit_score >= 5. Return valid JSON only."""
@@ -665,7 +665,7 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
                     f"I'd love to schedule a quick 15-minute call to explore if there's a potential "
                     f"fit for a reseller partnership.\n\n"
                     f"Looking forward to hearing from you.\n\n"
-                    + (sig or "EyeClick Business Development Team")
+                    + (sig or "")
                 )
             fu_subj = st.text_input("Follow-up subject", key=fu_subj_key)
             fu_body = st.text_area("Follow-up body", key=fu_body_key, height=200)
