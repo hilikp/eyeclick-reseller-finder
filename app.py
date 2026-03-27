@@ -273,22 +273,66 @@ if due_followups:
         st.markdown("---")
 
 # ================================================================
-# EYECLICK PROFILE
+# EYECLICK PROFILE  +  ICP  +  PER-VERTICAL VALUE PROPOSITIONS
 # ================================================================
 EYECLICK_PROFILE = """
-Company: EyeClick (eyeclick.com)
-Product: Interactive projection systems — projects games & activities onto floors/walls.
-Sales model: Sold exclusively through resellers / distributors worldwide.
+COMPANY: EyeClick (eyeclick.com)
+PRODUCT: Interactive projection systems — projects games & activities onto floors/walls.
+PRICE RANGE: $5,000–$30,000+ per system.
+SALES MODEL: Sold exclusively through resellers / distributors worldwide.
 
-VERTICALS & IDEAL RESELLERS
-HEALTHCARE  → rehab centres, senior/assisted-living, memory care, hospital waiting rooms.
-  Ideal resellers: medical/rehab equipment distributors, occupational-therapy suppliers.
-EDUCATION   → K-12, elementary, early-education, preschools, special-education.
-  Ideal resellers: EdTech companies, school AV/furniture suppliers, playground distributors.
-ENTERTAINMENT → trampoline parks, FECs, QSRs with play areas, indoor playgrounds.
-  Ideal resellers: amusement/FEC equipment suppliers, entertainment technology companies.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IDEAL CUSTOMER PROFILE (ICP) — RESELLER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Company size: 5–500 employees
+• Already sells equipment / technology / solutions to one of EyeClick's verticals
+• Has an established sales force calling on facilities in those sectors
+• Looking to expand product portfolio or add recurring revenue
+• Strong regional presence or national distribution network
+• BONUS signals: recently hired sales staff · expanding to new regions ·
+  launched new product lines · raised funding · opened new offices
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERTICALS · IDEAL RESELLERS · VALUE PROPOSITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HEALTHCARE
+  End customers : rehab centres, physical therapy clinics, senior/assisted-living,
+                  memory care units, hospital waiting rooms, paediatric therapy.
+  Ideal resellers: medical/rehab equipment distributors, occupational-therapy suppliers,
+                   senior-care product companies, hospital furniture/equipment dealers.
+  VALUE PROPOSITION FOR EMAIL:
+    "EyeClick turns therapy sessions into engaging, measurable games. Our systems improve
+     patient outcomes in balance, coordination and cognitive engagement — clinicians report
+     higher session adherence and measurable functional improvements. For your clients in
+     rehab and senior care, it's a differentiated product that sells itself on ROI."
+
+EDUCATION
+  End customers : K-12 schools, elementary schools, early-education/preschools,
+                  daycare centres, special-education programmes.
+  Ideal resellers: EdTech companies, school AV/furniture/playground equipment suppliers,
+                   special-education technology providers.
+  VALUE PROPOSITION FOR EMAIL:
+    "EyeClick transforms any floor into an interactive learning environment — no screens,
+     no devices, just pure physical play that develops motor skills, literacy and numeracy.
+     Schools see measurable improvements in engagement and physical activity. It fits
+     perfectly alongside your existing furniture or AV product lines."
+
+ENTERTAINMENT
+  End customers : trampoline parks, family entertainment centres (FECs),
+                  QSRs with play areas, indoor playgrounds, bowling alleys.
+  Ideal resellers: amusement/FEC equipment suppliers, playground equipment distributors,
+                   entertainment technology companies, arcade/attractions dealers.
+  VALUE PROPOSITION FOR EMAIL:
+    "EyeClick adds a unique, high-margin interactive attraction that drives repeat visits
+     and longer dwell time. FEC operators report 20–35% increase in repeat customers after
+     installing EyeClick zones. With a typical ROI under 12 months, it's one of the
+     strongest upsells you can offer your FEC and trampoline park clients."
 """
 
+# ================================================================
+# SEARCH QUERY TEMPLATES  (standard + growth-signal queries)
+# ================================================================
 QUERY_TEMPLATES = {
     "Healthcare": [
         "rehabilitation equipment distributor company {region}",
@@ -296,6 +340,8 @@ QUERY_TEMPLATES = {
         "occupational therapy equipment reseller {region}",
         "physical therapy clinic equipment supplier {region}",
         "assistive technology healthcare distributor {region}",
+        "rehab equipment company expanding new products {region}",
+        "senior care technology company growing hiring {region}",
     ],
     "Education": [
         "educational technology reseller K12 schools {region}",
@@ -303,6 +349,8 @@ QUERY_TEMPLATES = {
         "early childhood education equipment company {region}",
         "school interactive AV equipment distributor {region}",
         "EdTech reseller company elementary schools {region}",
+        "school equipment company expanding product line {region}",
+        "playground equipment distributor growing {region}",
     ],
     "Entertainment": [
         "trampoline park equipment supplier company {region}",
@@ -310,6 +358,8 @@ QUERY_TEMPLATES = {
         "indoor playground equipment manufacturer supplier {region}",
         "amusement equipment distributor company {region}",
         "QSR restaurant play area interactive equipment {region}",
+        "FEC attractions supplier expanding portfolio {region}",
+        "entertainment technology company new products {region}",
     ],
 }
 
@@ -347,7 +397,7 @@ def serper_search(query: str, n: int = 6) -> list:
         return []
 
 def analyse_companies(client, results: list, vertical: str, query: str, region_label: str) -> list:
-    prompt = f"""You are a business development expert for EyeClick finding reseller partners.
+    prompt = f"""You are a senior business development expert for EyeClick, identifying ideal reseller partners.
 
 {EYECLICK_PROFILE}
 
@@ -356,21 +406,45 @@ Search query: "{query}"  |  Vertical: {vertical}  |  Region: {region_label}
 Search results:
 {json.dumps(results, indent=2)}
 
-Identify REAL companies (not articles, directories, Wikipedia).
-Be GENEROUS — distributors, dealers, suppliers, integrators all qualify. Score fit 1-10.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCORING RUBRIC (use for fit_score)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Start at 5. Add points for:
++2  Already sells equipment/technology to EyeClick's exact end-customers
++1  Has established sales force / distribution network
++1  Company shows growth signals (hiring, expanding, new locations, new product lines)
++1  Strong regional/national presence in the target region
+Subtract for:
+-1  Very large enterprise (500+ employees) — harder to onboard as reseller
+-2  No clear connection to EyeClick's end-customer verticals
 
-Return JSON with key "companies" → array of:
+GROWTH SIGNALS to look for in snippets:
+- Mentions of expansion, new offices, new markets, new hires
+- Recently launched new product categories
+- Language suggesting active sales growth
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Filter out non-companies (articles, directories, Wikipedia, job boards).
+2. Score each real company using the rubric above.
+3. For companies scoring 5+, draft a personalised email using the VALUE PROPOSITION
+   for the {vertical} vertical from the profile above. Reference the company's specific
+   business in the opening line to show it's not a mass email.
+
+Return JSON with key "companies" → array:
 {{
-  "company_name" : "...",
-  "website"      : "full URL including https://",
-  "country"      : "...",
-  "vertical"     : "{vertical}",
-  "description"  : "One sentence: what they sell and to whom.",
-  "fit_score"    : <5-10>,
-  "fit_reason"   : "Why they could resell EyeClick (2-3 sentences).",
-  "contact_role" : "CEO / VP Sales / Managing Director",
-  "email_subject": "Compelling outreach subject line",
-  "email_body"   : "Personalised 150-200 word outreach email. Do NOT include any sign-off or signature — end the body naturally before the closing."
+  "company_name"   : "...",
+  "website"        : "full URL including https://",
+  "country"        : "...",
+  "vertical"       : "{vertical}",
+  "description"    : "One sentence: what they sell and to whom.",
+  "fit_score"      : <integer 5-10>,
+  "fit_reason"     : "2-3 sentences: ICP match + any growth signals spotted.",
+  "growth_signals" : "Any expansion/hiring/growth signals found, or 'None detected'.",
+  "contact_role"   : "CEO / Owner / VP Sales / Managing Director — most senior only",
+  "email_subject"  : "Specific, compelling subject line (not generic)",
+  "email_body"     : "150-200 word personalised outreach. Open with something specific about their business. Use the {vertical} value proposition. Do NOT include sign-off or signature."
 }}
 
 Include all real companies with fit_score >= 5. Return valid JSON only."""
@@ -490,11 +564,11 @@ def build_excel(rows: list) -> bytes:
     ws = wb.active
     ws.title = "Reseller Prospects"
     headers = ["Date","Company","Website","Country","Vertical","Description",
-               "Fit Score","Fit Reason","Contact Name","Title","Email",
+               "Fit Score","Fit Reason","Growth Signals","Contact Name","Title","Email",
                "Email Confidence","LinkedIn","Email Subject","Email Body","Sent?"]
     hfill  = PatternFill(start_color="0057A8", end_color="0057A8", fill_type="solid")
     hfont  = Font(color="FFFFFF", bold=True)
-    widths = [11,25,32,14,14,45,9,45,20,20,30,14,35,40,80,8]
+    widths = [11,25,32,14,14,45,9,45,35,20,20,30,14,35,40,80,8]
     for ci,(h,w) in enumerate(zip(headers,widths),1):
         c = ws.cell(1,ci,h); c.fill=hfill; c.font=hfont
         c.alignment = Alignment(horizontal="center",vertical="center",wrap_text=True)
@@ -510,6 +584,7 @@ def build_excel(rows: list) -> bytes:
             r.get("company_name",""), r.get("website",""),
             r.get("country",""), r.get("vertical",""),
             r.get("description",""), r.get("fit_score",""), r.get("fit_reason",""),
+            r.get("growth_signals",""),
             contact.get("name",""), contact.get("title",""),
             contact.get("email",""), contact.get("confidence",""), contact.get("linkedin",""),
             r.get("email_subject",""), r.get("email_body",""),
@@ -543,21 +618,27 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
 
     def e(v): return html_lib.escape(str(v)) if v else ""
 
-    company_name  = e(company_name_raw)
-    country       = e(r.get("country",""))
-    description   = e(r.get("description",""))
-    fit_reason    = e(r.get("fit_reason",""))
-    contact_name  = e(contact.get("name","—"))
-    contact_title = e(contact.get("title",""))
-    confidence    = e(contact.get("confidence",""))
+    company_name   = e(company_name_raw)
+    country        = e(r.get("country",""))
+    description    = e(r.get("description",""))
+    fit_reason     = e(r.get("fit_reason",""))
+    growth_signals = e(r.get("growth_signals",""))
+    contact_name   = e(contact.get("name","—"))
+    contact_title  = e(contact.get("title",""))
+    confidence     = e(contact.get("confidence",""))
 
-    country_html  = f'&nbsp;<span style="color:#666;font-size:.85rem;">🌐 {country}</span>' if country else ""
-    conf_html     = f'<span style="color:#888;font-size:.85rem;">{confidence} confidence</span>' if confidence else ""
-    sent_html     = '&nbsp;<span class="sent-badge">✅ Email Sent</span>' if sent else ""
-    email_link    = (f'<a href="mailto:{e(email_raw)}" style="color:#0057A8;">{e(email_raw)}</a>'
-                     if email_raw else "<em style='color:#999;'>not found</em>")
-    website_link  = (f'<a href="{e(website_raw)}" target="_blank" style="color:#0057A8;font-size:.88rem;">'
-                     f'🌐 {e(website_raw)}</a>' if website_raw else "")
+    country_html   = f'&nbsp;<span style="color:#666;font-size:.85rem;">🌐 {country}</span>' if country else ""
+    conf_html      = f'<span style="color:#888;font-size:.85rem;">{confidence} confidence</span>' if confidence else ""
+    sent_html      = '&nbsp;<span class="sent-badge">✅ Email Sent</span>' if sent else ""
+    email_link     = (f'<a href="mailto:{e(email_raw)}" style="color:#0057A8;">{e(email_raw)}</a>'
+                      if email_raw else "<em style='color:#999;'>not found</em>")
+    website_link   = (f'<a href="{e(website_raw)}" target="_blank" style="color:#0057A8;font-size:.88rem;">'
+                      f'🌐 {e(website_raw)}</a>' if website_raw else "")
+    has_growth     = growth_signals and growth_signals.lower() not in ("none detected","none","")
+    growth_html    = (f'<div style="margin:.3rem 0;background:#fff8e1;border-left:3px solid #ffb300;'
+                      f'padding:.3rem .6rem;border-radius:4px;font-size:.82rem;color:#7a5800;">'
+                      f'📈 <strong>Growth signal:</strong> {growth_signals}</div>'
+                      if has_growth else "")
 
     # ── Main card ──
     st.markdown(f"""
@@ -570,10 +651,11 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
         </div>
         <span class="score-pill" style="background:{score_color};">{score}/10</span>
       </div>
-      {('<div style="margin:.25rem 0 .4rem;">' + website_link + '</div>') if website_link else ''}
+      {('<div style="margin:.25rem 0 .3rem;">' + website_link + '</div>') if website_link else ''}
       <p style="margin:.4rem 0 .25rem;color:#444;font-size:.92rem;">{description}</p>
-      <p style="margin:0;color:#555;font-size:.85rem;"><em>{fit_reason}</em></p>
-      <hr style="margin:.55rem 0;border-color:#eee;">
+      <p style="margin:0 0 .25rem;color:#555;font-size:.85rem;"><em>{fit_reason}</em></p>
+      {growth_html}
+      <hr style="margin:.5rem 0;border-color:#eee;">
       <div style="display:flex;gap:1.4rem;flex-wrap:wrap;font-size:.9rem;align-items:center;">
         <span>👤 <strong>{contact_name}</strong>{(" · " + contact_title) if contact_title else ""}</span>
         <span>📧 {email_link}</span>
