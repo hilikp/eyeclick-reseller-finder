@@ -426,11 +426,15 @@ GROWTH SIGNALS to look for in snippets:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TASK
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Filter out non-companies (articles, directories, Wikipedia, job boards).
-2. Score each real company using the rubric above.
-3. For companies scoring 5+, draft a personalised email using the VALUE PROPOSITION
-   for the {vertical} vertical from the profile above. Reference the company's specific
-   business in the opening line to show it's not a mass email.
+1. Filter out: articles, directories, Wikipedia, job boards, financial/banking companies,
+   law firms, consulting firms, and ANY company with no direct connection to
+   {vertical} equipment, technology, or services.
+2. HARD REJECT any company from unrelated sectors (finance, insurance, real estate,
+   legal, HR, software unrelated to {vertical}). If in doubt — exclude it.
+3. Score each qualifying company using the rubric above.
+4. For companies scoring 5+, draft a personalised email using the VALUE PROPOSITION
+   for the {vertical} vertical. Reference the company's specific business in the
+   opening line to show it's not a mass email.
 
 Return JSON with key "companies" → array:
 {{
@@ -451,7 +455,7 @@ Include all real companies with fit_score >= 5. Return valid JSON only."""
     raw = ""
     try:
         resp = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
         )
