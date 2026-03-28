@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EyeClick Reseller Finder — Web App v2.4
+EyeClick Reseller Finder — Web App v2.5
 Features: Search · Contact Enrichment · Website Links · Email Editor
           Signature · Gmail/Outlook Integration · Sent Tracking · Follow-up Reminders
 Run with:  streamlit run app.py
@@ -261,7 +261,7 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.4*")
+    st.markdown("*EyeClick Reseller Finder v2.5*")
 
 # ================================================================
 # HEADER
@@ -676,6 +676,32 @@ def enrich_contact(client, company: dict) -> dict:
                 contact["linkedin"] = li.get("linkedin","")
     return contact
 
+def generate_followup_email(client, company: dict, contact: dict, original_subject: str) -> str:
+    """Ask Claude to write a personalised follow-up email for a company that has not replied."""
+    first_name = contact.get("name","").split()[0] if contact.get("name") else "there"
+    prompt = (
+        f"You are a business development expert for EyeClick (eyeclick.com), "
+        f"an interactive projection system sold exclusively through resellers worldwide.\n\n"
+        f"Company: {company.get('company_name','')}\n"
+        f"What they do: {company.get('description','')}\n"
+        f"Why they fit: {company.get('fit_reason','')}\n"
+        f"Contact first name: {first_name}\n"
+        f"Original email subject: {original_subject}\n\n"
+        f"Write a short (80-120 word), friendly follow-up email for someone who has not replied "
+        f"to the first outreach. Reference that it is a follow-up. Be specific to their business. "
+        f"Ask for a 15-minute call. Do NOT include any sign-off, greeting opener beyond 'Hi {first_name},' "
+        f"or signature — just the body text starting with 'Hi {first_name},'.\n"
+        f"Return only the email body text, no extra commentary."
+    )
+    try:
+        resp = client.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=400,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return resp.content[0].text.strip()
+    except Exception:
+        return ""
+
 # ================================================================
 # EXCEL EXPORT
 # ================================================================
@@ -860,6 +886,11 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
         if has_linkedin:
             a3.link_button("👁 Visit LinkedIn", linkedin_raw, use_container_width=True)
 
+        # ── Copy full email preview ──
+        full_preview = body + ("\n\n" + sig if sig else "")
+        with st.expander("📋 Preview & copy full email"):
+            st.code(full_preview, language=None)
+
         # Follow-up email (if already sent)
         if sent:
             st.markdown("---")
@@ -869,22 +900,43 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
             if fu_subj_key not in st.session_state:
                 st.session_state[fu_subj_key] = f"Following up: {subject}"
             if fu_body_key not in st.session_state:
-                sig = st.session_state.get("signature","")
+                first = contact.get("name","").split()[0] if contact.get("name") else "there"
                 st.session_state[fu_body_key] = (
-                    f"Hi {contact.get('name','').split()[0] if contact.get('name') else 'there'},\n\n"
+                    f"Hi {first},\n\n"
                     f"I wanted to follow up on my previous message regarding EyeClick's interactive "
                     f"projection systems. Did you get a chance to review it?\n\n"
                     f"I'd love to schedule a quick 15-minute call to explore if there's a potential "
                     f"fit for a reseller partnership.\n\n"
-                    f"Looking forward to hearing from you.\n\n"
-                    + (sig or "")
+                    f"Looking forward to hearing from you."
                 )
             fu_subj = st.text_input("Follow-up subject", key=fu_subj_key)
-            fu_body = st.text_area("Follow-up body", key=fu_body_key, height=200)
+            fu_body = st.text_area("Follow-up body (no signature — added automatically below)", key=fu_body_key, height=180)
+
+            # AI generate button
+            ai_gen_key = f"ai_gen_{key_prefix}_{hash(website_raw)}"
+            if st.button("🤖 Generate AI Follow-up", key=ai_gen_key, use_container_width=True):
+                with st.spinner("Writing personalised follow-up…"):
+                    generated = generate_followup_email(
+                        get_anthropic_client(), r, contact, subject
+                    )
+                if generated:
+                    st.session_state[fu_body_key] = generated
+                    st.rerun()
+                else:
+                    st.warning("Could not generate — try again.")
+
+            # Signature (live, never baked into body)
+            sig = st.session_state.get("signature","")
+            fu_full = fu_body + ("\n\n" + sig if sig else "")
+
+            # Full follow-up preview
+            with st.expander("📋 Preview & copy follow-up email"):
+                st.code(fu_full, language=None)
+
             if email_raw:
                 fu_mailto = ("mailto:" + email_raw
                              + "?subject=" + urllib.parse.quote(fu_subj)
-                             + "&body="    + urllib.parse.quote(fu_body))
+                             + "&body="    + urllib.parse.quote(fu_full))
                 b1, b2 = st.columns(2)
                 b1.link_button("📨 Open Follow-up in Email Client", fu_mailto, use_container_width=True)
                 if b2.button("✅ Mark Follow-up Sent", key=f"fu_done_{key_prefix}_{hash(website_raw)}", use_container_width=True):
@@ -998,10 +1050,23 @@ if final:
     region_label = st.session_state.get("last_region","")
 
     st.markdown(f"## Results · {region_label.strip()} · {today}")
-    tabs   = st.tabs(["📋 All Results", "👴 Seniors", "🏫 Education", "🎯 Entertainment"])
+
+    # Stats bar
     groups = {"Seniors":[], "Education":[], "Entertainment":[]}
     for r in final:
         groups.get(r.get("vertical",""), []).append(r)
+    avg_score = round(sum(r.get("fit_score",0) for r in final) / max(len(final),1), 1)
+    with_email = sum(1 for r in final if r.get("contact",{}).get("email"))
+    s1, s2, s3, s4, s5, s6 = st.columns(6)
+    s1.metric("Total Found", len(final))
+    s2.metric("👴 Seniors",       len(groups["Seniors"]))
+    s3.metric("🏫 Education",     len(groups["Education"]))
+    s4.metric("🎯 Entertainment", len(groups["Entertainment"]))
+    s5.metric("Avg Fit Score",    f"{avg_score}/10")
+    s6.metric("With Email",       with_email)
+    st.markdown("---")
+
+    tabs   = st.tabs(["📋 All Results", "👴 Seniors", "🏫 Education", "🎯 Entertainment"])
 
     with tabs[0]:
         for i, r in enumerate(final, 1):
