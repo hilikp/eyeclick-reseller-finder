@@ -239,7 +239,7 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.0*")
+    st.markdown("*EyeClick Reseller Finder v2.2*")
 
 # ================================================================
 # HEADER
