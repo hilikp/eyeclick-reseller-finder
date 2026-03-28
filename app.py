@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EyeClick Reseller Finder — Web App v2.0
+EyeClick Reseller Finder — Web App v2.4
 Features: Search · Contact Enrichment · Website Links · Email Editor
           Signature · Gmail/Outlook Integration · Sent Tracking · Follow-up Reminders
 Run with:  streamlit run app.py
@@ -54,6 +54,7 @@ st.markdown("""
       margin-bottom:.4rem; box-shadow:0 2px 6px rgba(0,0,0,.06);
   }
   .badge-healthcare    {background:#e8f5e9;color:#2e7d32;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
+  .badge-seniors       {background:#fce4ec;color:#880e4f;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
   .badge-education     {background:#e3f2fd;color:#1565c0;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
   .badge-entertainment {background:#fff3e0;color:#e65100;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
   .score-pill   {display:inline-block;background:#0057A8;color:white;border-radius:20px;padding:2px 10px;font-size:.8rem;font-weight:700;}
@@ -213,6 +214,27 @@ with st.sidebar:
         st.caption(f"📋 {seen_total} companies in history log")
 
     st.markdown("---")
+    st.markdown("**🚫 Blocked Territories**")
+    st.caption("Hard-coded: Israel (ALL) · Canada (Seniors)")
+    if "extra_blocked" not in st.session_state:
+        st.session_state["extra_blocked"] = []
+    new_block_country  = st.text_input("Country to block", placeholder="e.g. Germany", key="nb_country")
+    new_block_vertical = st.selectbox("Vertical to block", ["ALL","Seniors","Education","Entertainment"], key="nb_vertical")
+    if st.button("➕ Add Block", use_container_width=True):
+        if new_block_country.strip():
+            st.session_state["extra_blocked"].append(
+                {"country": new_block_country.strip(), "vertical": new_block_vertical}
+            )
+            st.success(f"Blocked: {new_block_country.strip()} + {new_block_vertical}")
+    if st.session_state["extra_blocked"]:
+        for i, b in enumerate(st.session_state["extra_blocked"]):
+            c1, c2 = st.columns([3,1])
+            c1.caption(f"🚫 {b['country']} · {b['vertical']}")
+            if c2.button("✕", key=f"rmblk_{i}"):
+                st.session_state["extra_blocked"].pop(i)
+                st.rerun()
+
+    st.markdown("---")
 
     # Sent History
     st.markdown("## 📬 Sent History")
@@ -239,7 +261,7 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.2*")
+    st.markdown("*EyeClick Reseller Finder v2.4*")
 
 # ================================================================
 # HEADER
@@ -296,33 +318,34 @@ IDEAL CUSTOMER PROFILE (ICP) — RESELLER
 VERTICALS · IDEAL RESELLERS · VALUE PROPOSITIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-HEALTHCARE
-  End customers : rehab centres, physical therapy clinics, senior/assisted-living,
-                  memory care units, hospital waiting rooms, paediatric therapy.
-  Ideal resellers: medical/rehab equipment distributors, occupational-therapy suppliers,
-                   senior-care product companies, hospital furniture/equipment dealers.
+SENIORS
+  End customers : senior/assisted-living facilities, nursing homes, memory care units,
+                  dementia care centres, rehabilitation centres, occupational therapy clinics.
+  Ideal resellers: senior-care product distributors, cognitive stimulation equipment suppliers,
+                   sensory room providers, rehab/OT equipment companies, nursing home tech suppliers.
   VALUE PROPOSITION FOR EMAIL:
-    "EyeClick turns therapy sessions into engaging, measurable games. Our systems improve
-     patient outcomes in balance, coordination and cognitive engagement — clinicians report
-     higher session adherence and measurable functional improvements. For your clients in
-     rehab and senior care, it's a differentiated product that sells itself on ROI."
+    "EyeClick's interactive projection system is purpose-built for senior engagement —
+     it projects games and activities directly onto floors and walls, requiring no
+     hand-held devices, making it ideal for residents with limited mobility or cognitive
+     decline. Facilities report measurable improvements in social engagement and motor
+     activity. It's a natural complement to your existing senior care product portfolio."
 
 EDUCATION
   End customers : K-12 schools, elementary schools, early-education/preschools,
                   daycare centres, special-education programmes.
   Ideal resellers: EdTech companies, school AV/furniture/playground equipment suppliers,
-                   special-education technology providers.
+                   special-education technology providers, early childhood learning distributors.
   VALUE PROPOSITION FOR EMAIL:
     "EyeClick transforms any floor into an interactive learning environment — no screens,
      no devices, just pure physical play that develops motor skills, literacy and numeracy.
      Schools see measurable improvements in engagement and physical activity. It fits
-     perfectly alongside your existing furniture or AV product lines."
+     perfectly alongside your existing furniture, AV, or playground product lines."
 
 ENTERTAINMENT
   End customers : trampoline parks, family entertainment centres (FECs),
-                  QSRs with play areas, indoor playgrounds, bowling alleys.
+                  QSRs with play areas, indoor playgrounds, bowling alleys, leisure centres.
   Ideal resellers: amusement/FEC equipment suppliers, playground equipment distributors,
-                   entertainment technology companies, arcade/attractions dealers.
+                   entertainment technology companies, arcade/attractions dealers, leisure tech firms.
   VALUE PROPOSITION FOR EMAIL:
     "EyeClick adds a unique, high-margin interactive attraction that drives repeat visits
      and longer dwell time. FEC operators report 20–35% increase in repeat customers after
@@ -331,17 +354,101 @@ ENTERTAINMENT
 """
 
 # ================================================================
+# GOLD EXAMPLES — real EyeClick resellers used as pattern-matching
+# ================================================================
+GOLD_EXAMPLES = {
+    "Seniors": [
+        {
+            "name"    : "CDS Boutique",
+            "website" : "https://cdsboutique.com/en/",
+            "country" : "Canada",
+            "summary" : "Distributor of cognitive stimulation, sensory and activity products "
+                        "for senior care facilities, nursing homes and memory care units in Canada.",
+        },
+        {
+            "name"    : "Fu Kang Healthcare",
+            "website" : "https://fukanghealthcare.com/",
+            "country" : "Singapore",
+            "summary" : "Healthcare equipment and assistive technology distributor serving elderly "
+                        "care facilities, rehabilitation centres and nursing homes across Singapore.",
+        },
+        {
+            "name"    : "Pro Senectute",
+            "website" : "https://www.pro-senectute.it/",
+            "country" : "Italy",
+            "summary" : "Italian organisation supplying products and services for senior "
+                        "well-being, cognitive engagement and active ageing in care facilities.",
+        },
+    ],
+    "Education": [
+        {
+            "name"    : "Kaplan Early Learning",
+            "website" : "https://www.kaplanco.com/",
+            "country" : "USA",
+            "summary" : "National distributor of early childhood and K-12 educational materials, "
+                        "classroom furniture, learning toys and STEM supplies for schools and daycares.",
+        },
+        {
+            "name"    : "Jonti-Craft",
+            "website" : "https://www.jonti-craft.com/",
+            "country" : "USA",
+            "summary" : "Manufacturer and distributor of children's furniture, storage and "
+                        "educational equipment for K-12 schools, preschools and daycare centres.",
+        },
+        {
+            "name"    : "Southpaw Enterprises",
+            "website" : "https://www.southpaw.com/",
+            "country" : "USA",
+            "summary" : "Distributor of sensory integration, occupational therapy and special "
+                        "education equipment for schools and therapy clinics.",
+        },
+    ],
+    "Entertainment": [
+        {
+            "name"    : "Zone Leisure Technology",
+            "website" : "https://www.facebook.com/ZoneLeisureTechnology/",
+            "country" : "United Kingdom",
+            "summary" : "UK-based leisure technology company supplying interactive attractions, "
+                        "entertainment equipment and digital play solutions to FECs and leisure venues.",
+        },
+    ],
+}
+
+# ================================================================
+# BLOCKED TERRITORIES — hard-coded defaults + user-configurable
+# ================================================================
+DEFAULT_BLOCKED = [
+    {"country": "Israel",  "vertical": "ALL"},
+    {"country": "Canada",  "vertical": "Seniors"},
+]
+
+def get_blocked_territories() -> list:
+    """Merge hard-coded defaults with any user-added blocks from sidebar."""
+    base  = list(DEFAULT_BLOCKED)
+    extra = st.session_state.get("extra_blocked", [])
+    return base + extra
+
+def is_blocked(country: str, vertical: str, blocked: list) -> bool:
+    c = country.strip().lower()
+    for b in blocked:
+        bc = b["country"].strip().lower()
+        bv = b["vertical"].strip().lower()
+        if bc == c and (bv == "all" or bv == vertical.lower()):
+            return True
+    return False
+
+# ================================================================
 # SEARCH QUERY TEMPLATES  (standard + growth-signal queries)
 # ================================================================
 QUERY_TEMPLATES = {
-    "Healthcare": [
-        "rehabilitation equipment distributor company {region}",
+    "Seniors": [
         "senior care activity products supplier company {region}",
-        "occupational therapy equipment reseller {region}",
-        "physical therapy clinic equipment supplier {region}",
-        "assistive technology healthcare distributor {region}",
-        "rehab equipment company expanding new products {region}",
-        "senior care technology company growing hiring {region}",
+        "nursing home cognitive stimulation equipment distributor {region}",
+        "assisted living technology products supplier {region}",
+        "dementia care sensory equipment distributor {region}",
+        "occupational therapy senior care equipment reseller {region}",
+        "memory care activity products company growing {region}",
+        "senior living engagement technology supplier {region}",
     ],
     "Education": [
         "educational technology reseller K12 schools {region}",
@@ -357,7 +464,7 @@ QUERY_TEMPLATES = {
         "family entertainment center FEC equipment distributor {region}",
         "indoor playground equipment manufacturer supplier {region}",
         "amusement equipment distributor company {region}",
-        "QSR restaurant play area interactive equipment {region}",
+        "leisure technology interactive attractions supplier {region}",
         "FEC attractions supplier expanding portfolio {region}",
         "entertainment technology company new products {region}",
     ],
@@ -373,7 +480,7 @@ REGIONS = {
     "🌏  Asia Pacific"                        : "Asia Pacific",
     "🇦🇺  Australia & New Zealand"            : "Australia New Zealand",
     "🌎  Latin America"                       : "Latin America",
-    "🇮🇱  Middle East"                        : "Middle East Israel",
+    "🌍  Middle East (excl. Israel)"          : "Middle East UAE Saudi Arabia",
 }
 
 # ================================================================
@@ -396,11 +503,26 @@ def serper_search(query: str, n: int = 6) -> list:
     except Exception:
         return []
 
-def analyse_companies(client, results: list, vertical: str, query: str, region_label: str) -> list:
+def analyse_companies(client, results: list, vertical: str, query: str,
+                      region_label: str, blocked: list) -> list:
+    # Build gold examples block for this vertical
+    examples = GOLD_EXAMPLES.get(vertical, [])
+    gold_block = ""
+    if examples:
+        gold_block = f"\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nGOLD EXAMPLES — find companies SIMILAR to these known EyeClick resellers:\n"
+        for ex in examples:
+            gold_block += f"  • {ex['name']} ({ex['country']}) — {ex['website']}\n    {ex['summary']}\n"
+
+    # Build blocked territories warning
+    blocked_str = "\n".join(
+        f"  • {b['country']} + {b['vertical']}" for b in blocked
+    )
+    blocked_block = f"\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nBLOCKED TERRITORIES — NEVER return companies from:\n{blocked_str}\n(EyeClick already has exclusive distributors there)\n" if blocked_str else ""
+
     prompt = f"""You are a senior business development expert for EyeClick, identifying ideal reseller partners.
 
 {EYECLICK_PROFILE}
-
+{gold_block}{blocked_block}
 Search query: "{query}"  |  Vertical: {vertical}  |  Region: {region_label}
 
 Search results:
@@ -412,43 +534,37 @@ SCORING RUBRIC (use for fit_score)
 Start at 5. Add points for:
 +2  Already sells equipment/technology to EyeClick's exact end-customers
 +1  Has established sales force / distribution network
-+1  Company shows growth signals (hiring, expanding, new locations, new product lines)
-+1  Strong regional/national presence in the target region
-Subtract for:
--1  Very large enterprise (500+ employees) — harder to onboard as reseller
++1  Growth signals detected (hiring, expanding, new locations, new product lines)
++1  Strong regional/national presence
+-1  Very large enterprise (500+ employees)
 -2  No clear connection to EyeClick's end-customer verticals
-
-GROWTH SIGNALS to look for in snippets:
-- Mentions of expansion, new offices, new markets, new hires
-- Recently launched new product categories
-- Language suggesting active sales growth
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TASK
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Filter out: articles, directories, Wikipedia, job boards, financial/banking companies,
-   law firms, consulting firms, and ANY company with no direct connection to
-   {vertical} equipment, technology, or services.
-2. HARD REJECT any company from unrelated sectors (finance, insurance, real estate,
-   legal, HR, software unrelated to {vertical}). If in doubt — exclude it.
-3. Score each qualifying company using the rubric above.
-4. For companies scoring 5+, draft a personalised email using the VALUE PROPOSITION
-   for the {vertical} vertical. Reference the company's specific business in the
-   opening line to show it's not a mass email.
+1. HARD REJECT: articles, directories, Wikipedia, job boards, finance, banking,
+   insurance, legal, real estate, HR, unrelated software, single end-customer
+   venues (a single school, one nursing home, one FEC venue).
+2. HARD REJECT any company from the BLOCKED TERRITORIES listed above.
+3. Score each qualifying company. Look for similarity to the GOLD EXAMPLES.
+4. For companies scoring 5+, draft a personalised email referencing their
+   specific business. Use the {vertical} VALUE PROPOSITION above.
 
 Return JSON with key "companies" → array:
 {{
-  "company_name"   : "...",
-  "website"        : "full URL including https://",
-  "country"        : "...",
-  "vertical"       : "{vertical}",
-  "description"    : "One sentence: what they sell and to whom.",
-  "fit_score"      : <integer 5-10>,
-  "fit_reason"     : "2-3 sentences: ICP match + any growth signals spotted.",
-  "growth_signals" : "Any expansion/hiring/growth signals found, or 'None detected'.",
-  "contact_role"   : "CEO / Owner / VP Sales / Managing Director — most senior only",
-  "email_subject"  : "Specific, compelling subject line (not generic)",
-  "email_body"     : "150-200 word personalised outreach. Open with something specific about their business. Use the {vertical} value proposition. Do NOT include sign-off or signature."
+  "company_name"      : "...",
+  "website"           : "full URL including https://",
+  "country"           : "...",
+  "vertical"          : "{vertical}",
+  "description"       : "One sentence: what they sell and to whom.",
+  "fit_score"         : <integer 5-10>,
+  "fit_reason"        : "2-3 sentences: ICP match + similarity to gold examples.",
+  "growth_signals"    : "Growth signals found, or 'None detected'.",
+  "evidence_snippets" : ["Short paraphrased evidence point 1 from search results",
+                         "Short paraphrased evidence point 2"],
+  "contact_role"      : "CEO / Owner / VP Sales / Managing Director — most senior only",
+  "email_subject"     : "Specific, compelling subject line",
+  "email_body"        : "150-200 word personalised outreach. Open with something specific about their business. Do NOT include sign-off or signature."
 }}
 
 Include all real companies with fit_score >= 5. Return valid JSON only."""
@@ -579,7 +695,7 @@ def build_excel(rows: list) -> bytes:
         ws.column_dimensions[get_column_letter(ci)].width = w
     ws.row_dimensions[1].height = 28
     ws.freeze_panes = "A2"
-    vcol = {"Healthcare":"E8F5E9","Education":"E3F2FD","Entertainment":"FFF3E0"}
+    vcol = {"Seniors":"FCE4EC","Healthcare":"E8F5E9","Education":"E3F2FD","Entertainment":"FFF3E0"}
     sent_companies = {e.get("company") for e in load_sent_log()}
     for r in rows:
         contact = r.get("contact",{})
@@ -644,6 +760,15 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
                       f'📈 <strong>Growth signal:</strong> {growth_signals}</div>'
                       if has_growth else "")
 
+    # Evidence snippets
+    snippets       = r.get("evidence_snippets", [])
+    snippets_html  = ""
+    if snippets:
+        items = "".join(f'<li style="margin:.15rem 0;">{e(s)}</li>' for s in snippets[:2])
+        snippets_html = (f'<div style="margin:.3rem 0;background:#f0f4fa;border-left:3px solid #0057A8;'
+                         f'padding:.3rem .6rem;border-radius:4px;font-size:.82rem;color:#333;">'
+                         f'🔍 <strong>Evidence:</strong><ul style="margin:.2rem 0;padding-left:1.2rem;">{items}</ul></div>')
+
     # ── Main card ──
     st.markdown(f"""
     <div class="result-card">
@@ -658,6 +783,7 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
       {('<div style="margin:.25rem 0 .3rem;">' + website_link + '</div>') if website_link else ''}
       <p style="margin:.4rem 0 .25rem;color:#444;font-size:.92rem;">{description}</p>
       <p style="margin:0 0 .25rem;color:#555;font-size:.85rem;"><em>{fit_reason}</em></p>
+      {snippets_html}
       {growth_html}
       <hr style="margin:.5rem 0;border-color:#eee;">
       <div style="display:flex;gap:1.4rem;flex-wrap:wrap;font-size:.9rem;align-items:center;">
@@ -773,7 +899,7 @@ with st.container():
     col1, col2, col3, col4 = st.columns([2, 2, 1.2, 1])
     with col1:
         st.markdown("**Vertical (market segment)**")
-        sel_h = st.checkbox("🏥 Healthcare",    value=True)
+        sel_h = st.checkbox("👴 Seniors",        value=True)
         sel_e = st.checkbox("🏫 Education",     value=True)
         sel_n = st.checkbox("🎯 Entertainment", value=False)
     with col2:
@@ -788,8 +914,8 @@ with st.container():
         st.markdown("<br>", unsafe_allow_html=True)
         search_clicked = st.button("🔍  SEARCH", use_container_width=True)
 
-selected_verticals = (["Healthcare"] if sel_h else []) + \
-                     (["Education"]  if sel_e else []) + \
+selected_verticals = (["Seniors"]       if sel_h else []) + \
+                     (["Education"]     if sel_e else []) + \
                      (["Entertainment"] if sel_n else [])
 
 st.markdown("---")
@@ -815,6 +941,7 @@ if search_clicked:
     v_cycle = itertools.cycle(selected_verticals)
     q_pool  = {v: [q.format(region=region_kw).strip() for q in QUERY_TEMPLATES[v]]
                for v in selected_verticals}
+    blocked = get_blocked_territories()
     attempt = 0
 
     while len(all_companies) < num_results and attempt < 40:
@@ -829,11 +956,12 @@ if search_clicked:
         results   = serper_search(query, 6)
         if not results:
             continue
-        companies = analyse_companies(client, results, v, query, region_label)
+        companies = analyse_companies(client, results, v, query, region_label, blocked)
         dedup     = st.session_state.get("dedup_days", 30)
         new       = [c for c in companies
                      if c.get("website","") not in seen_sites
-                     and not is_recently_seen(c.get("website",""), dedup)]
+                     and not is_recently_seen(c.get("website",""), dedup)
+                     and not is_blocked(c.get("country",""), v, blocked)]
         for c in new:
             seen_sites.add(c.get("website",""))
         all_companies.extend(new)
@@ -870,8 +998,8 @@ if final:
     region_label = st.session_state.get("last_region","")
 
     st.markdown(f"## Results · {region_label.strip()} · {today}")
-    tabs   = st.tabs(["📋 All Results", "🏥 Healthcare", "🏫 Education", "🎯 Entertainment"])
-    groups = {"Healthcare":[], "Education":[], "Entertainment":[]}
+    tabs   = st.tabs(["📋 All Results", "👴 Seniors", "🏫 Education", "🎯 Entertainment"])
+    groups = {"Seniors":[], "Education":[], "Entertainment":[]}
     for r in final:
         groups.get(r.get("vertical",""), []).append(r)
 
@@ -879,7 +1007,7 @@ if final:
         for i, r in enumerate(final, 1):
             result_card(r, i, key_prefix="all")
 
-    for tab, vertical in zip(tabs[1:], ["Healthcare","Education","Entertainment"]):
+    for tab, vertical in zip(tabs[1:], ["Seniors","Education","Entertainment"]):
         with tab:
             vlist = groups[vertical]
             if vlist:
