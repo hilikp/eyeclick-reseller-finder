@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-EyeClick Reseller Finder — Web App v2.7
+EyeClick Reseller Finder — Web App v2.8
 Features: Search · Contact Enrichment · Website Links · Email Editor
           Signature · Gmail/Outlook Integration · Sent Tracking · Follow-up Reminders
 Run with:  streamlit run app.py
 """
 
-import re, json, time, io, requests, anthropic, os
+import re, json, time, io, requests, anthropic, os, base64
 import html as html_lib
 import urllib.parse
 import streamlit as st
@@ -15,6 +15,24 @@ from datetime import datetime, timedelta
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+
+# ================================================================
+# LOGO HELPER  — loads local file as base64; falls back to CDN
+# ================================================================
+def _logo_img_tag(dark_bg: bool = True) -> str:
+    """Return an <img> tag for the EyeClick logo.
+    Tries eyeclick_logo.png in the app folder first (works on Cloud too if
+    committed); falls back to the official CDN URL."""
+    local = os.path.join(os.path.dirname(__file__), "eyeclick_logo.png")
+    if os.path.exists(local):
+        with open(local, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+        src = f"data:image/png;base64,{b64}"
+    else:
+        src = ("https://cdn.eyeclick.com/logo-light.png" if dark_bg
+               else "https://cdn.eyeclick.com/logo-dark.png")
+    height = "38px" if dark_bg else "42px"
+    return f'<img src="{src}" style="height:{height};object-fit:contain;" alt="EyeClick">'
 
 # ================================================================
 # 🔑  API KEYS
@@ -51,29 +69,37 @@ st.markdown("""
   /* ── Page background ── */
   [data-testid="stAppViewContainer"] > .main {background: #F5F7F9;}
 
-  /* ── Main header bar ── */
+  /* ── Main header bar — dark navy with logo gradient accent strip ── */
   .ec-header {
-      background: linear-gradient(135deg, #101820 0%, #1c2a3a 100%);
+      background: #101820;
+      border-top: 3px solid transparent;
+      border-image: linear-gradient(90deg, #FF6B9D, #FFB347, #CC44DD) 1;
       padding: 1.2rem 1.8rem; border-radius: 14px;
       margin-bottom: 1.6rem;
       display: flex; align-items: center; gap: 1.4rem;
-      box-shadow: 0 6px 24px rgba(16,24,32,0.22);
+      box-shadow: 0 6px 28px rgba(16,24,32,0.28);
   }
   .ec-header img  {height: 38px; object-fit: contain; flex-shrink: 0;}
   .ec-header-text {line-height: 1.3;}
   .ec-header-text .title {
       font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: -.01em;
   }
-  .ec-header-text .sub   {font-size: .82rem; color: rgba(255,255,255,.55); margin-top:.15rem;}
+  .ec-header-text .sub   {font-size: .82rem; color: rgba(255,255,255,.50); margin-top:.15rem;}
 
   /* ── Result card ── */
   .result-card {
       background: #fff;
       border: 1px solid rgba(16,24,32,0.08);
-      border-left: 3px solid #5B5CD6;
       border-radius: 12px; padding: 1.1rem 1.4rem;
       margin-bottom: .5rem;
       box-shadow: 0 2px 10px rgba(91,92,214,0.06);
+      position: relative;
+  }
+  .result-card::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: linear-gradient(180deg, #FF6B9D, #CC44DD);
+      border-radius: 12px 0 0 12px;
   }
 
   /* ── Vertical badges ── */
@@ -260,12 +286,11 @@ def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("""
+        st.markdown(f"""
         <div style='text-align:center;margin-bottom:1.8rem;'>
           <div style='background:#101820;display:inline-block;padding:1rem 2rem;
                       border-radius:14px;margin-bottom:1rem;'>
-            <img src='https://cdn.eyeclick.com/logo-light.png'
-                 style='height:42px;display:block;' alt='EyeClick'>
+            {_logo_img_tag(dark_bg=True)}
           </div>
           <p style='color:#717171;margin:0;font-size:.95rem;'>Reseller Finder &nbsp;·&nbsp; Team Access</p>
         </div>""", unsafe_allow_html=True)
@@ -285,11 +310,10 @@ if not st.session_state.get("authenticated"):
 # SIDEBAR
 # ================================================================
 with st.sidebar:
-    st.markdown("""
+    st.markdown(f"""
     <div style='background:#101820;border-radius:10px;padding:.7rem 1rem;
                 margin-bottom:1.2rem;text-align:center;'>
-      <img src='https://cdn.eyeclick.com/logo-light.png'
-           style='height:28px;display:inline-block;' alt='EyeClick'>
+      {_logo_img_tag(dark_bg=True)}
     </div>""", unsafe_allow_html=True)
     st.markdown("## ⚙️ Settings")
 
@@ -370,14 +394,14 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.7*")
+    st.markdown("*EyeClick Reseller Finder v2.8*")
 
 # ================================================================
 # HEADER
 # ================================================================
-st.markdown("""
+st.markdown(f"""
 <div class="ec-header">
-  <img src="https://cdn.eyeclick.com/logo-light.png" alt="EyeClick">
+  {_logo_img_tag(dark_bg=True)}
   <div class="ec-header-text">
     <div class="title">Reseller Finder</div>
     <div class="sub">AI-powered worldwide reseller discovery &nbsp;·&nbsp; email outreach &nbsp;·&nbsp; follow-up tracking</div>
