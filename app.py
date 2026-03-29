@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EyeClick Reseller Finder — Web App v2.6
+EyeClick Reseller Finder — Web App v2.7
 Features: Search · Contact Enrichment · Website Links · Email Editor
           Signature · Gmail/Outlook Integration · Sent Tracking · Follow-up Reminders
 Run with:  streamlit run app.py
@@ -40,35 +40,98 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  html, body, [class*="css"], [data-testid] {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
   #MainMenu, footer, header {visibility: hidden;}
-  .block-container {padding-top: 2rem;}
-  .eyeclick-header {
-      background: linear-gradient(135deg, #0057A8 0%, #003d7a 100%);
-      padding: 1.8rem 2rem; border-radius: 12px;
-      color: white; margin-bottom: 1.8rem;
+  .block-container {padding-top: 1.5rem !important;}
+
+  /* ── Page background ── */
+  [data-testid="stAppViewContainer"] > .main {background: #F5F7F9;}
+
+  /* ── Main header bar ── */
+  .ec-header {
+      background: linear-gradient(135deg, #101820 0%, #1c2a3a 100%);
+      padding: 1.2rem 1.8rem; border-radius: 14px;
+      margin-bottom: 1.6rem;
+      display: flex; align-items: center; gap: 1.4rem;
+      box-shadow: 0 6px 24px rgba(16,24,32,0.22);
   }
-  .eyeclick-header h1 {margin:0; font-size:2rem; font-weight:700;}
-  .eyeclick-header p  {margin:.3rem 0 0; opacity:.85; font-size:1rem;}
+  .ec-header img  {height: 38px; object-fit: contain; flex-shrink: 0;}
+  .ec-header-text {line-height: 1.3;}
+  .ec-header-text .title {
+      font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: -.01em;
+  }
+  .ec-header-text .sub   {font-size: .82rem; color: rgba(255,255,255,.55); margin-top:.15rem;}
+
+  /* ── Result card ── */
   .result-card {
-      background:#fff; border:1px solid #dde3ee;
-      border-radius:10px; padding:1.1rem 1.3rem;
-      margin-bottom:.4rem; box-shadow:0 2px 6px rgba(0,0,0,.06);
+      background: #fff;
+      border: 1px solid rgba(16,24,32,0.08);
+      border-left: 3px solid #5B5CD6;
+      border-radius: 12px; padding: 1.1rem 1.4rem;
+      margin-bottom: .5rem;
+      box-shadow: 0 2px 10px rgba(91,92,214,0.06);
   }
-  .badge-healthcare    {background:#e8f5e9;color:#2e7d32;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
-  .badge-seniors       {background:#fce4ec;color:#880e4f;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
-  .badge-education     {background:#e3f2fd;color:#1565c0;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
-  .badge-entertainment {background:#fff3e0;color:#e65100;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
-  .score-pill   {display:inline-block;background:#0057A8;color:white;border-radius:20px;padding:2px 10px;font-size:.8rem;font-weight:700;}
-  .sent-badge   {display:inline-block;background:#2e7d32;color:white;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:600;}
-  .reminder-box {background:#fff8e1;border:1px solid #ffb300;border-radius:10px;padding:1rem 1.3rem;margin-bottom:1rem;}
+
+  /* ── Vertical badges ── */
+  .badge-seniors       {background:#fce4ec;color:#c2185b;border-radius:20px;padding:2px 10px;font-size:.74rem;font-weight:600;}
+  .badge-education     {background:#EEEEF9;color:#5B5CD6;border-radius:20px;padding:2px 10px;font-size:.74rem;font-weight:600;}
+  .badge-entertainment {background:#fff3e0;color:#e65100;border-radius:20px;padding:2px 10px;font-size:.74rem;font-weight:600;}
+  .badge-healthcare    {background:#e8f5e9;color:#2e7d32;border-radius:20px;padding:2px 10px;font-size:.74rem;font-weight:600;}
+
+  /* ── Score / sent pills ── */
+  .score-pill {display:inline-block;background:#5B5CD6;color:#fff;border-radius:20px;padding:2px 11px;font-size:.8rem;font-weight:700;}
+  .sent-badge {display:inline-block;background:#1b8a4a;color:#fff;border-radius:20px;padding:2px 10px;font-size:.74rem;font-weight:600;}
+
+  /* ── Follow-up reminder banner ── */
+  .reminder-box {
+      background:#EEEEF9; border:1px solid #5B5CD6;
+      border-left:4px solid #5B5CD6;
+      border-radius:10px; padding:.9rem 1.2rem; margin-bottom:1rem;
+  }
+
+  /* ── Buttons — pill shape matching eyeclick.com CTAs ── */
   .stButton>button {
-      background:#0057A8;color:white;border:none;border-radius:8px;
-      padding:.5rem 1rem;font-size:.95rem;font-weight:600;width:100%;
+      background: #5B5CD6 !important; color: #fff !important;
+      border: none !important; border-radius: 200px !important;
+      padding: .48rem 1.2rem !important; font-size: .9rem !important;
+      font-weight: 600 !important; width: 100% !important;
+      letter-spacing: .01em !important;
+      transition: background .18s ease, transform .1s ease !important;
   }
-  .stButton>button:hover {background:#003d7a;}
-  div[data-testid="stExpander"] {border:1px solid #e0e6f0;border-radius:8px;margin-bottom:.8rem;}
-  .stLinkButton a {background:#0057A8!important;color:white!important;border-radius:8px!important;
-      padding:.45rem 1rem!important;font-weight:600!important;font-size:.9rem!important;}
+  .stButton>button:hover  {background: #4748C4 !important;}
+  .stButton>button:active {transform: scale(.97) !important;}
+
+  /* ── Link buttons ── */
+  .stLinkButton a {
+      background: #5B5CD6 !important; color: #fff !important;
+      border-radius: 200px !important; padding: .44rem 1.1rem !important;
+      font-weight: 600 !important; font-size: .88rem !important;
+      border: none !important; text-decoration: none !important;
+      transition: background .18s ease !important;
+  }
+  .stLinkButton a:hover {background: #4748C4 !important;}
+
+  /* ── Expanders ── */
+  div[data-testid="stExpander"] {
+      border: 1px solid rgba(16,24,32,0.09) !important;
+      border-radius: 10px !important; margin-bottom: .7rem !important;
+      background: #fff !important;
+  }
+
+  /* ── Metric tiles ── */
+  [data-testid="metric-container"] {
+      background: #fff !important;
+      border: 1px solid rgba(16,24,32,0.08) !important;
+      border-radius: 10px !important;
+  }
+
+  /* ── Sidebar ── */
+  [data-testid="stSidebar"] {border-right: 1px solid rgba(16,24,32,0.08);}
+  [data-testid="stSidebar"] .stButton>button {border-radius:200px !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -198,10 +261,13 @@ def login_page():
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("""
-        <div style='text-align:center;margin-bottom:1.5rem;'>
-          <span style='font-size:3rem;'>🎯</span>
-          <h2 style='color:#0057A8;margin:.4rem 0 .2rem;'>EyeClick</h2>
-          <p style='color:#666;margin:0;'>Reseller Finder · Team Access</p>
+        <div style='text-align:center;margin-bottom:1.8rem;'>
+          <div style='background:#101820;display:inline-block;padding:1rem 2rem;
+                      border-radius:14px;margin-bottom:1rem;'>
+            <img src='https://cdn.eyeclick.com/logo-light.png'
+                 style='height:42px;display:block;' alt='EyeClick'>
+          </div>
+          <p style='color:#717171;margin:0;font-size:.95rem;'>Reseller Finder &nbsp;·&nbsp; Team Access</p>
         </div>""", unsafe_allow_html=True)
         pwd = st.text_input("Password", type="password", placeholder="Enter team password")
         if st.button("Sign In", use_container_width=True):
@@ -219,6 +285,12 @@ if not st.session_state.get("authenticated"):
 # SIDEBAR
 # ================================================================
 with st.sidebar:
+    st.markdown("""
+    <div style='background:#101820;border-radius:10px;padding:.7rem 1rem;
+                margin-bottom:1.2rem;text-align:center;'>
+      <img src='https://cdn.eyeclick.com/logo-light.png'
+           style='height:28px;display:inline-block;' alt='EyeClick'>
+    </div>""", unsafe_allow_html=True)
     st.markdown("## ⚙️ Settings")
 
     # Signature
@@ -298,15 +370,18 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.6*")
+    st.markdown("*EyeClick Reseller Finder v2.7*")
 
 # ================================================================
 # HEADER
 # ================================================================
 st.markdown("""
-<div class="eyeclick-header">
-  <h1>🎯 EyeClick Reseller Finder</h1>
-  <p>AI-powered search · Worldwide reseller discovery · Email outreach with follow-up tracking</p>
+<div class="ec-header">
+  <img src="https://cdn.eyeclick.com/logo-light.png" alt="EyeClick">
+  <div class="ec-header-text">
+    <div class="title">Reseller Finder</div>
+    <div class="sub">AI-powered worldwide reseller discovery &nbsp;·&nbsp; email outreach &nbsp;·&nbsp; follow-up tracking</div>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
