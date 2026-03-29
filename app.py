@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EyeClick Reseller Finder — Web App v2.5
+EyeClick Reseller Finder — Web App v2.6
 Features: Search · Contact Enrichment · Website Links · Email Editor
           Signature · Gmail/Outlook Integration · Sent Tracking · Follow-up Reminders
 Run with:  streamlit run app.py
@@ -26,6 +26,7 @@ HUNTER_API_KEY    = st.secrets["HUNTER_API_KEY"]
 
 SENT_LOG_FILE         = "sent_log.json"
 SEEN_COMPANIES_FILE   = "seen_companies.json"
+FEEDBACK_LOG_FILE     = "feedback_log.json"
 
 # ================================================================
 # PAGE SETUP
@@ -110,6 +111,42 @@ def get_due_followups() -> list:
 
 def already_sent(company_name: str) -> bool:
     return any(e.get("company") == company_name for e in load_sent_log())
+
+# ================================================================
+# FEEDBACK LOG  (user-reported issues)
+# ================================================================
+def load_feedback_log() -> list:
+    try:
+        if os.path.exists(FEEDBACK_LOG_FILE):
+            with open(FEEDBACK_LOG_FILE) as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return []
+
+def save_feedback(company_name: str, website: str, reason_code: str):
+    """Save user feedback. reason_code: 'details' | 'linkedin' | 'industry'"""
+    log = load_feedback_log()
+    log.append({
+        "company_name": company_name,
+        "website"     : website,
+        "reason"      : reason_code,
+        "date"        : datetime.now().strftime("%Y-%m-%d %H:%M"),
+    })
+    try:
+        with open(FEEDBACK_LOG_FILE, "w") as f:
+            json.dump(log, f, indent=2)
+    except Exception:
+        pass
+
+def is_flagged_wrong_industry(website: str) -> bool:
+    """True if this site was previously flagged as wrong industry by a user."""
+    if not website:
+        return False
+    return any(
+        e.get("website","").lower() == website.lower() and e.get("reason") == "industry"
+        for e in load_feedback_log()
+    )
 
 # ================================================================
 # SEEN COMPANIES  (cross-session deduplication)
@@ -261,7 +298,7 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.5*")
+    st.markdown("*EyeClick Reseller Finder v2.6*")
 
 # ================================================================
 # HEADER
@@ -640,32 +677,69 @@ def hunter_search(domain: str) -> dict:
     except Exception:
         return {}
 
+def validate_website(url: str) -> bool:
+    """Return True if the URL is reachable (HTTP < 400). Uses HEAD then GET fallback."""
+    if not url or not url.startswith("http"):
+        return False
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; EyeClickBot/1.0)"}
+    try:
+        r = requests.head(url, timeout=4, allow_redirects=True, headers=headers)
+        return r.status_code < 400
+    except Exception:
+        pass
+    try:
+        r = requests.get(url, timeout=4, allow_redirects=True, headers=headers, stream=True)
+        return r.status_code < 400
+    except Exception:
+        return False
+
 def linkedin_search(client, company_name: str) -> dict:
-    results = serper_search(
-        f'site:linkedin.com/in "{company_name}" CEO OR "Managing Director" OR "VP Sales" OR President', 4)
+    """Search for the most senior person at company_name on LinkedIn.
+    Verifies the result actually mentions the company before returning it."""
+    query   = (f'site:linkedin.com/in "{company_name}" '
+               f'CEO OR "Managing Director" OR "VP" OR Owner OR President OR Founder')
+    results = serper_search(query, 8)
     if not results:
         return {}
+
+    # ── Verification pass: keep snippets that mention the company name ──
+    co_lower  = company_name.lower()
+    verified  = [r for r in results
+                 if co_lower in (r.get("snippet","") + r.get("title","")).lower()]
+    unverified_flag = len(verified) == 0          # no result explicitly mentioned the company
+    use_results     = verified if verified else results   # fall back to all if nothing verified
+
     try:
         resp = client.messages.create(
-            model="claude-haiku-4-5-20251001", max_tokens=256,
+            model="claude-haiku-4-5-20251001", max_tokens=300,
             messages=[{"role": "user", "content":
-                f'From these results about "{company_name}", extract the most senior person.\n'
-                f'{json.dumps(results)}\n'
-                'Return JSON only: {{"name":"","title":"","linkedin":"https://linkedin.com/in/..."}}'}],
+                f'From these LinkedIn search results, find the most senior person who actually '
+                f'WORKS AT "{company_name}". If no result clearly shows someone at that company, '
+                f'set works_at_company to false.\n'
+                f'{json.dumps(use_results)}\n'
+                'Return JSON only (no markdown): '
+                '{{"name":"","title":"","linkedin":"https://linkedin.com/in/...","works_at_company":true}}'}],
         )
-        m = re.search(r'\{.*\}', resp.content[0].text, re.DOTALL)
-        return json.loads(m.group()) if m else {}
+        m = re.search(r'\{.*?\}', resp.content[0].text, re.DOTALL)
+        if not m:
+            return {}
+        data = json.loads(m.group())
+        if not data.get("works_at_company", True):
+            return {}                              # Haiku itself flagged the match as wrong
+        data["linkedin_unverified"] = unverified_flag
+        return data
     except Exception:
         return {}
 
 def enrich_contact(client, company: dict) -> dict:
-    contact = {"name":"","title":"","email":"","confidence":"","linkedin":""}
+    contact = {"name":"","title":"","email":"","confidence":"","linkedin":"","linkedin_unverified":False}
     h = hunter_search(company.get("website",""))
     if h:
-        contact.update({"name": h.get("name",""), "title": h.get("title",""),
-                        "email": h.get("email",""),
+        contact.update({"name"      : h.get("name",""),
+                        "title"     : h.get("title",""),
+                        "email"     : h.get("email",""),
                         "confidence": f"{h.get('confidence',0)}%" if h.get("confidence") else "",
-                        "linkedin": h.get("linkedin","")})
+                        "linkedin"  : h.get("linkedin","")})
     if not contact["name"] or not contact["linkedin"]:
         li = linkedin_search(client, company.get("company_name",""))
         if li:
@@ -673,7 +747,8 @@ def enrich_contact(client, company: dict) -> dict:
                 contact["name"]  = li.get("name","")
                 contact["title"] = li.get("title","")
             if not contact["linkedin"]:
-                contact["linkedin"] = li.get("linkedin","")
+                contact["linkedin"]            = li.get("linkedin","")
+                contact["linkedin_unverified"] = li.get("linkedin_unverified", False)
     return contact
 
 def generate_followup_email(client, company: dict, contact: dict, original_subject: str) -> str:
@@ -773,13 +848,18 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
     contact_title  = e(contact.get("title",""))
     confidence     = e(contact.get("confidence",""))
 
+    website_ok     = r.get("website_ok", None)   # None = not checked yet
+    li_unverified  = contact.get("linkedin_unverified", False)
+
     country_html   = f'&nbsp;<span style="color:#666;font-size:.85rem;">🌐 {country}</span>' if country else ""
     conf_html      = f'<span style="color:#888;font-size:.85rem;">{confidence} confidence</span>' if confidence else ""
     sent_html      = '&nbsp;<span class="sent-badge">✅ Email Sent</span>' if sent else ""
     email_link     = (f'<a href="mailto:{e(email_raw)}" style="color:#0057A8;">{e(email_raw)}</a>'
                       if email_raw else "<em style='color:#999;'>not found</em>")
+    web_warn       = ('&nbsp;<span style="color:#e65100;font-size:.78rem;font-weight:600;">⚠️ Site unreachable</span>'
+                      if website_ok is False else "")
     website_link   = (f'<a href="{e(website_raw)}" target="_blank" style="color:#0057A8;font-size:.88rem;">'
-                      f'🌐 {e(website_raw)}</a>' if website_raw else "")
+                      f'🌐 {e(website_raw)}</a>{web_warn}' if website_raw else "")
     has_growth     = growth_signals and growth_signals.lower() not in ("none detected","none","")
     growth_html    = (f'<div style="margin:.3rem 0;background:#fff8e1;border-left:3px solid #ffb300;'
                       f'padding:.3rem .6rem;border-radius:4px;font-size:.82rem;color:#7a5800;">'
@@ -823,7 +903,9 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
     # ── LinkedIn + action row ──
     has_linkedin = linkedin_raw and linkedin_raw.startswith("http")
     if has_linkedin:
-        st.markdown(f"&nbsp;&nbsp;&nbsp;[🔗 LinkedIn Profile]({linkedin_raw})", unsafe_allow_html=True)
+        unverified_note = " ⚠️ *profile match unverified — please confirm*" if li_unverified else ""
+        st.markdown(f"&nbsp;&nbsp;&nbsp;[🔗 LinkedIn Profile]({linkedin_raw}){unverified_note}",
+                    unsafe_allow_html=True)
 
     # ── Email editor expander ──
     email_label = "✉️  Edit & Send Email" + (" — ✅ Sent" if sent else "")
@@ -944,6 +1026,33 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
                     st.success("Follow-up marked as done!")
                     st.rerun()
 
+    # ── Report Issue ──
+    report_options = [
+        "a. Incorrect details — website or contact info is wrong",
+        "b. LinkedIn profile is not correct / couldn't be verified",
+        "c. Wrong industry — this company is irrelevant (remove permanently)",
+    ]
+    with st.expander(f"🚩 Report an Issue · {company_name_raw}"):
+        st.markdown("Help improve search quality by flagging a problem with this result:")
+        chosen = st.radio("Issue type:", report_options,
+                          key=f"report_radio_{key_prefix}_{hash(website_raw)}",
+                          label_visibility="collapsed")
+        if st.button("🚩 Submit Report", key=f"report_btn_{key_prefix}_{hash(website_raw)}",
+                     use_container_width=True):
+            code = "details" if chosen.startswith("a") else "linkedin" if chosen.startswith("b") else "industry"
+            save_feedback(company_name_raw, website_raw, code)
+            if code == "industry":
+                current = st.session_state.get("last_results", [])
+                st.session_state["last_results"] = [
+                    c for c in current if c.get("website","") != website_raw
+                ]
+                st.success("🗑️ Removed from results. This company will be skipped in future searches.")
+                st.rerun()
+            elif code == "linkedin":
+                st.success("✅ LinkedIn issue noted. Please use the correct profile if you find it.")
+            else:
+                st.success("✅ Details issue reported — thank you!")
+
 # ================================================================
 # SEARCH FORM
 # ================================================================
@@ -1013,7 +1122,8 @@ if search_clicked:
         new       = [c for c in companies
                      if c.get("website","") not in seen_sites
                      and not is_recently_seen(c.get("website",""), dedup)
-                     and not is_blocked(c.get("country",""), v, blocked)]
+                     and not is_blocked(c.get("country",""), v, blocked)
+                     and not is_flagged_wrong_industry(c.get("website",""))]
         for c in new:
             seen_sites.add(c.get("website",""))
         all_companies.extend(new)
@@ -1026,7 +1136,8 @@ if search_clicked:
     for i, company in enumerate(final):
         progress_bar.progress(70 + int((i / max(len(final),1)) * 28))
         status_box.info(f"📇 Finding contact: **{company.get('company_name','')}** ({i+1}/{len(final)})…")
-        company["contact"] = enrich_contact(client, company)
+        company["contact"]    = enrich_contact(client, company)
+        company["website_ok"] = validate_website(company.get("website",""))
         time.sleep(0.6)
 
     progress_bar.progress(100)
