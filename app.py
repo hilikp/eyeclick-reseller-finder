@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EyeClick Reseller Finder — Web App v2.8
+EyeClick Reseller Finder — Web App v2.9
 Features: Search · Contact Enrichment · Website Links · Email Editor
           Signature · Gmail/Outlook Integration · Sent Tracking · Follow-up Reminders
 Run with:  streamlit run app.py
@@ -69,15 +69,15 @@ st.markdown("""
   /* ── Page background ── */
   [data-testid="stAppViewContainer"] > .main {background: #F5F7F9;}
 
-  /* ── Main header bar — dark navy with logo gradient accent strip ── */
+  /* ── Main header bar ── */
   .ec-header {
-      background: #101820;
-      border-top: 3px solid transparent;
-      border-image: linear-gradient(90deg, #FF6B9D, #FFB347, #CC44DD) 1;
+      background: linear-gradient(135deg, #101820 0%, #1a1030 100%);
       padding: 1.2rem 1.8rem; border-radius: 14px;
       margin-bottom: 1.6rem;
       display: flex; align-items: center; gap: 1.4rem;
-      box-shadow: 0 6px 28px rgba(16,24,32,0.28);
+      box-shadow: 0 6px 28px rgba(16,24,32,0.28),
+                  0 -2px 0 0 #FF6B9D inset,
+                  inset 4px 0 0 0 #CC44DD;
   }
   .ec-header img  {height: 38px; object-fit: contain; flex-shrink: 0;}
   .ec-header-text {line-height: 1.3;}
@@ -90,16 +90,10 @@ st.markdown("""
   .result-card {
       background: #fff;
       border: 1px solid rgba(16,24,32,0.08);
+      border-left: 4px solid #CC44DD;
       border-radius: 12px; padding: 1.1rem 1.4rem;
       margin-bottom: .5rem;
-      box-shadow: 0 2px 10px rgba(91,92,214,0.06);
-      position: relative;
-  }
-  .result-card::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-      background: linear-gradient(180deg, #FF6B9D, #CC44DD);
-      border-radius: 12px 0 0 12px;
+      box-shadow: 0 2px 10px rgba(204,68,221,0.07);
   }
 
   /* ── Vertical badges ── */
@@ -145,7 +139,9 @@ st.markdown("""
   div[data-testid="stExpander"] {
       border: 1px solid rgba(16,24,32,0.09) !important;
       border-radius: 10px !important; margin-bottom: .7rem !important;
-      background: #fff !important;
+  }
+  div[data-testid="stExpander"] summary {
+      font-weight: 500 !important;
   }
 
   /* ── Metric tiles ── */
@@ -394,7 +390,7 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.8*")
+    st.markdown("*EyeClick Reseller Finder v2.9*")
 
 # ================================================================
 # HEADER
@@ -578,31 +574,31 @@ def is_blocked(country: str, vertical: str, blocked: list) -> bool:
 # ================================================================
 QUERY_TEMPLATES = {
     "Seniors": [
-        "senior care activity products supplier company {region}",
-        "nursing home cognitive stimulation equipment distributor {region}",
-        "assisted living technology products supplier {region}",
-        "dementia care sensory equipment distributor {region}",
-        "occupational therapy senior care equipment reseller {region}",
-        "memory care activity products company growing {region}",
-        "senior living engagement technology supplier {region}",
+        "senior care technology equipment distributor dealer {region}",
+        "nursing home assistive technology B2B supplier {region}",
+        "assisted living equipment reseller sales force {region}",
+        "dementia care sensory equipment specialist distributor {region}",
+        "occupational therapy senior care equipment dealer company {region}",
+        "senior living engagement technology B2B distributor {region}",
+        "care home activity technology supplier company {region}",
     ],
     "Education": [
-        "educational technology reseller K12 schools {region}",
-        "special education equipment supplier distributor {region}",
-        "early childhood education equipment company {region}",
-        "school interactive AV equipment distributor {region}",
-        "EdTech reseller company elementary schools {region}",
-        "school equipment company expanding product line {region}",
-        "playground equipment distributor growing {region}",
+        "educational technology B2B reseller K12 schools distributor {region}",
+        "special education equipment specialist supplier {region}",
+        "early childhood education equipment B2B dealer {region}",
+        "school interactive AV equipment reseller VAR {region}",
+        "EdTech distributor company elementary schools {region}",
+        "school furniture equipment dealer expanding technology {region}",
+        "sensory playground inclusive equipment distributor {region}",
     ],
     "Entertainment": [
-        "trampoline park equipment supplier company {region}",
-        "family entertainment center FEC equipment distributor {region}",
-        "indoor playground equipment manufacturer supplier {region}",
-        "amusement equipment distributor company {region}",
-        "leisure technology interactive attractions supplier {region}",
-        "FEC attractions supplier expanding portfolio {region}",
-        "entertainment technology company new products {region}",
+        "trampoline park FEC equipment supplier B2B {region}",
+        "family entertainment center attractions equipment distributor {region}",
+        "indoor playground equipment specialist supplier {region}",
+        "amusement park attractions equipment dealer {region}",
+        "leisure technology interactive attractions B2B supplier {region}",
+        "FEC equipment dealer expanding interactive portfolio {region}",
+        "entertainment venue technology equipment reseller {region}",
     ],
 }
 
@@ -678,12 +674,24 @@ Start at 5. Add points for:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TASK
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. HARD REJECT: articles, directories, Wikipedia, job boards, finance, banking,
-   insurance, legal, real estate, HR, unrelated software, single end-customer
-   venues (a single school, one nursing home, one FEC venue).
+IDEAL RESELLER PROFILE: A company with a dedicated B2B sales force that regularly
+calls on {vertical} end-customers (care homes, schools, FECs, etc.) and actively
+resells/distributes equipment or technology products — NOT a single venue or end-user.
+
+1. HARD REJECT the following — do NOT include them even if they mention seniors/education/entertainment:
+   • Articles, blogs, news sites, directories, Wikipedia, LinkedIn profiles, job boards
+   • Finance, banking, insurance, legal, real estate, HR, unrelated software
+   • Single end-customer venues (one school, one nursing home, one FEC venue)
+   • Catalog / mail-order / online-only retailers and party supply companies
+     (e.g. S&S Worldwide, Lakeshore Learning storefront, Oriental Trading)
+   • General merchandise / promotional products distributors
+   • Companies whose primary business is consumables, crafts, or party supplies
+   • Large consumer e-commerce companies (Amazon, Walmart, etc.)
 2. HARD REJECT any company from the BLOCKED TERRITORIES listed above.
-3. Score each qualifying company. Look for similarity to the GOLD EXAMPLES.
-4. For companies scoring 5+, draft a personalised email referencing their
+3. PRIORITISE: specialist distributors, equipment dealers, and VARs that have physical
+   sales reps visiting {vertical} facilities and already carry comparable equipment.
+4. Score each qualifying company. Look for similarity to the GOLD EXAMPLES.
+5. For companies scoring 5+, draft a personalised email referencing their
    specific business. Use the {vertical} VALUE PROPOSITION above.
 
 Return JSON with key "companies" → array:
