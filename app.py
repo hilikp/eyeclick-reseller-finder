@@ -708,7 +708,24 @@ def _render_outreach_queue_tab():
     st.markdown("---")
 
     for item in pending:
-        with st.expander(f"✉️ **{item['company_name']}** — {item['contact_email']}  ·  {item.get('vertical','')}"):
+        has_email  = bool(item.get("contact_email"))
+        email_disp = item["contact_email"] if has_email else "⚠️ no email found"
+        with st.expander(f"{'✉️' if has_email else '🔍'} **{item['company_name']}** — {email_disp}  ·  {item.get('vertical','')}"):
+            if not has_email:
+                st.warning("No email found for this company. You can:\n- Add an email manually below\n- Visit their website or LinkedIn to find a contact\n- Skip this entry")
+                manual_email = st.text_input("Add email manually", placeholder="contact@company.com",
+                                             key=f"manual_email_{item['id']}")
+                if manual_email and st.button("💾 Save email", key=f"save_email_{item['id']}"):
+                    q_all = load_queue()
+                    for qi in q_all:
+                        if qi["id"] == item["id"]:
+                            qi["contact_email"] = manual_email
+                    save_queue(q_all)
+                    st.success("Email saved!")
+                    st.rerun()
+                if item.get("website"):
+                    st.markdown(f"🌐 [Visit website]({item['website']})")
+
             qsubj_key = f"q_subj_{item['id']}"
             qbody_key = f"q_body_{item['id']}"
             if qsubj_key not in st.session_state:
@@ -732,7 +749,9 @@ def _render_outreach_queue_tab():
                 st.caption("✍️ *Signature will be appended at send time*")
 
             c1, c2 = st.columns(2)
-            if c1.button("📤 Send Now", key=f"send_now_{item['id']}", use_container_width=True):
+            send_disabled = not has_email
+            if c1.button("📤 Send Now", key=f"send_now_{item['id']}", use_container_width=True,
+                         disabled=send_disabled):
                 if not GMAIL_USER or not GMAIL_APP_PASSWORD:
                     st.error("Set Gmail credentials first.")
                 else:

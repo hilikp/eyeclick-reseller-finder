@@ -140,34 +140,42 @@ def run():
     add_to_seen_log(final)
 
     # ── Phase 3: Queue qualified companies ────────────────────────────────
-    log(f"Phase 3: Queuing companies with score >= {MIN_FIT_SCORE} and email found…")
+    log(f"Phase 3: Queuing companies with score >= {MIN_FIT_SCORE}…")
     initial_count = 0
+    no_email_count = 0
     for company in final:
         score   = company.get("fit_score", 0)
         contact = company.get("contact", {})
         email   = contact.get("email","")
-        if score >= MIN_FIT_SCORE and email:
-            item = {
-                "id"           : str(uuid.uuid4()),
-                "type"         : "initial",
-                "company_name" : company.get("company_name",""),
-                "website"      : company.get("website",""),
-                "vertical"     : company.get("vertical",""),
-                "contact_name" : contact.get("name",""),
-                "contact_email": email,
-                "subject"      : company.get("email_subject",""),
-                "body"         : company.get("email_body",""),
-                "queued_date"  : datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "status"       : "pending",
-                "sent_date"    : None,
-            }
-            if add_to_queue(item):
-                initial_count += 1
+        if score < MIN_FIT_SCORE:
+            log(f"  ✗ Below score threshold: {company.get('company_name','')} (score={score})")
+            continue
+        # Queue even without email — user can review and manually find contact
+        item = {
+            "id"           : str(uuid.uuid4()),
+            "type"         : "initial",
+            "company_name" : company.get("company_name",""),
+            "website"      : company.get("website",""),
+            "vertical"     : company.get("vertical",""),
+            "contact_name" : contact.get("name",""),
+            "contact_email": email,   # may be empty — shown as "no email" in queue tab
+            "subject"      : company.get("email_subject",""),
+            "body"         : company.get("email_body",""),
+            "queued_date"  : datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "status"       : "pending",
+            "sent_date"    : None,
+        }
+        if add_to_queue(item):
+            initial_count += 1
+            if email:
                 log(f"  ✓ Queued: {company.get('company_name','')} → {email} (score {score})")
             else:
-                log(f"  ⏭ Already queued: {company.get('company_name','')}")
+                no_email_count += 1
+                log(f"  ✓ Queued (no email): {company.get('company_name','')} (score {score}) — manual contact needed")
         else:
-            log(f"  ✗ Skipped: {company.get('company_name','')} (score={score}, email={bool(email)})")
+            log(f"  ⏭ Already queued: {company.get('company_name','')})")
+    if no_email_count:
+        log(f"  ℹ {no_email_count} companies queued without email — check Hunter.io quota or find contacts manually")
 
     # ── Phase 4: Queue due follow-ups ──────────────────────────────────────
     log("Phase 4: Checking for due follow-ups…")
@@ -203,16 +211,22 @@ def run():
 
     # ── Phase 5: Send notification email to self ───────────────────────────
     log("Phase 5: Sending notification email…")
+    with_email    = initial_count - no_email_count
     notif_subject = (f"EyeClick Daily Batch Ready: "
-                     f"{initial_count} new + {followup_count} follow-up(s)")
+                     f"{initial_count} companies + {followup_count} follow-up(s)")
     notif_body = (
         f"Good morning!\n\n"
         f"Today's outreach batch is ready for your review:\n\n"
-        f"  • {initial_count} new initial outreach email(s)\n"
+        f"  • {with_email} companies with email — ready to send\n"
+        f"  • {no_email_count} companies queued without email — need manual contact\n"
         f"  • {followup_count} follow-up email(s)\n\n"
-        f"Open the app and go to the 📬 Outreach Queue tab to review and send:\n"
-        f"{APP_URL}\n\n"
-        f"---\nThis message was sent automatically by EyeClick Daily Worker."
+        + (f"NOTE: {no_email_count} companies had no email found.\n"
+           f"This usually means Hunter.io quota is exhausted (check hunter.io dashboard)\n"
+           f"or these companies are not in Hunter's database.\n\n"
+           if no_email_count else "")
+        + f"Open the app and go to the Outreach Queue tab to review and send:\n"
+          f"{APP_URL}\n\n"
+          f"---\nThis message was sent automatically by EyeClick Daily Worker."
     )
     ok = send_gmail(
         to=secrets["GMAIL_USER"],
