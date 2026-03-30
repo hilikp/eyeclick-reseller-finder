@@ -68,6 +68,29 @@ def run():
     seen_sites : set = set()
     all_companies   : list = []
 
+    # ── Quick Serper connectivity test ────────────────────────────────────
+    log("Connectivity test: pinging Serper API…")
+    test_results = serper_search("senior care equipment distributor", 2, secrets["SERPER_API_KEY"])
+    if not test_results:
+        log("ERROR: Serper API returned no results on test query.")
+        log("Possible causes: (1) SERPER_API_KEY quota exhausted — check serper.dev dashboard")
+        log("                 (2) Wrong key in secrets.toml — verify SERPER_API_KEY value")
+        log("Aborting — no point running searches if Serper is down.")
+        send_gmail(
+            to=secrets["GMAIL_USER"],
+            subject="EyeClick Worker ERROR: Serper API not working",
+            body="The daily worker could not get results from Serper.\n\n"
+                 "Please check:\n"
+                 "1. Your Serper quota at https://serper.dev (free = 2,500 searches/month)\n"
+                 "2. That SERPER_API_KEY in secrets.toml is correct\n\n"
+                 "Worker aborted — no emails queued today.",
+            signature="",
+            gmail_user=secrets["GMAIL_USER"],
+            gmail_app_password=secrets["GMAIL_APP_PASSWORD"],
+        )
+        sys.exit(1)
+    log(f"  ✓ Serper OK — got {len(test_results)} test result(s)")
+
     # ── Phase 1: Search + analyse ──────────────────────────────────────────
     log(f"Phase 1: Searching for {RESULTS_PER_RUN} companies in [{', '.join(VERTICALS_TO_SEARCH)}] / {REGION_LABEL}")
     v_cycle = itertools.cycle(VERTICALS_TO_SEARCH)
@@ -85,8 +108,11 @@ def run():
         log(f"  Searching ({v}): {query}")
         results   = serper_search(query, 6, secrets["SERPER_API_KEY"])
         if not results:
+            log(f"    ⚠ Serper returned 0 results")
             continue
+        log(f"    Serper: {len(results)} results → analysing with Claude…")
         companies = analyse_companies(client, results, v, query, REGION_LABEL, blocked)
+        log(f"    Claude: {len(companies)} qualifying companies")
         new = [c for c in companies
                if c.get("website","") not in seen_sites
                and not is_recently_seen(c.get("website",""), DEDUP_DAYS)
