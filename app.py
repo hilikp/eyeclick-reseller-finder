@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-EyeClick Reseller Finder — Web App v2.9
+EyeClick Reseller Finder — Web App v3.0
 Features: Search · Contact Enrichment · Website Links · Email Editor
           Signature · Gmail/Outlook Integration · Sent Tracking · Follow-up Reminders
 Run with:  streamlit run app.py
 """
 
-import re, json, time, io, requests, anthropic, os, base64
+import re, json, time, io, requests, anthropic, os, base64, uuid
 import html as html_lib
 import urllib.parse
+import backend
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -41,6 +42,33 @@ APP_PASSWORD      = st.secrets["APP_PASSWORD"]
 ANTHROPIC_API_KEY = st.secrets["ANTHROPIC_API_KEY"]
 SERPER_API_KEY    = st.secrets["SERPER_API_KEY"]
 HUNTER_API_KEY    = st.secrets["HUNTER_API_KEY"]
+GMAIL_USER         = st.secrets.get("GMAIL_USER", "")
+GMAIL_APP_PASSWORD = st.secrets.get("GMAIL_APP_PASSWORD", "")
+
+# ── Import shared constants + pure-logic functions from backend.py ──
+from backend import (
+    EYECLICK_PROFILE, GOLD_EXAMPLES, QUERY_TEMPLATES, REGIONS, DEFAULT_BLOCKED,
+    SENT_LOG_FILE, SEEN_COMPANIES_FILE, FEEDBACK_LOG_FILE, QUEUE_FILE,
+    load_sent_log, append_sent_log, mark_followup_done, get_due_followups, already_sent,
+    load_feedback_log, save_feedback, is_flagged_wrong_industry,
+    load_seen_companies, is_recently_seen, add_to_seen_log,
+    is_blocked, validate_website, generate_followup_email,
+    load_queue, save_queue, add_to_queue, mark_queue_item,
+    send_gmail,
+)
+
+# ── Thin wrappers that inject API keys (call sites in app.py stay unchanged) ──
+def serper_search(query: str, n: int = 6) -> list:
+    return backend.serper_search(query, n, SERPER_API_KEY)
+
+def hunter_search(domain: str) -> dict:
+    return backend.hunter_search(domain, HUNTER_API_KEY)
+
+def enrich_contact(client, company: dict) -> dict:
+    return backend.enrich_contact(client, company, SERPER_API_KEY, HUNTER_API_KEY)
+
+def analyse_companies(client, results, vertical, query, region_label, blocked):
+    return backend.analyse_companies(client, results, vertical, query, region_label, blocked)
 
 SENT_LOG_FILE         = "sent_log.json"
 SEEN_COMPANIES_FILE   = "seen_companies.json"
@@ -158,124 +186,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================================================================
-# SENT LOG HELPERS
-# ================================================================
-def load_sent_log() -> list:
-    try:
-        if os.path.exists(SENT_LOG_FILE):
-            with open(SENT_LOG_FILE) as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return []
-
-def append_sent_log(entry: dict):
-    log = load_sent_log()
-    log.append(entry)
-    try:
-        with open(SENT_LOG_FILE, "w") as f:
-            json.dump(log, f, indent=2)
-    except Exception:
-        pass
-
-def mark_followup_done(company: str):
-    log = load_sent_log()
-    for e in log:
-        if e.get("company") == company and not e.get("follow_up_done"):
-            e["follow_up_done"] = True
-    try:
-        with open(SENT_LOG_FILE, "w") as f:
-            json.dump(log, f, indent=2)
-    except Exception:
-        pass
-
-def get_due_followups() -> list:
-    today = datetime.now().strftime("%Y-%m-%d")
-    return [e for e in load_sent_log()
-            if e.get("follow_up_date","") <= today and not e.get("follow_up_done")]
-
-def already_sent(company_name: str) -> bool:
-    return any(e.get("company") == company_name for e in load_sent_log())
-
-# ================================================================
-# FEEDBACK LOG  (user-reported issues)
-# ================================================================
-def load_feedback_log() -> list:
-    try:
-        if os.path.exists(FEEDBACK_LOG_FILE):
-            with open(FEEDBACK_LOG_FILE) as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return []
-
-def save_feedback(company_name: str, website: str, reason_code: str):
-    """Save user feedback. reason_code: 'details' | 'linkedin' | 'industry'"""
-    log = load_feedback_log()
-    log.append({
-        "company_name": company_name,
-        "website"     : website,
-        "reason"      : reason_code,
-        "date"        : datetime.now().strftime("%Y-%m-%d %H:%M"),
-    })
-    try:
-        with open(FEEDBACK_LOG_FILE, "w") as f:
-            json.dump(log, f, indent=2)
-    except Exception:
-        pass
-
-def is_flagged_wrong_industry(website: str) -> bool:
-    """True if this site was previously flagged as wrong industry by a user."""
-    if not website:
-        return False
-    return any(
-        e.get("website","").lower() == website.lower() and e.get("reason") == "industry"
-        for e in load_feedback_log()
-    )
-
-# ================================================================
-# SEEN COMPANIES  (cross-session deduplication)
-# ================================================================
-def load_seen_companies() -> list:
-    try:
-        if os.path.exists(SEEN_COMPANIES_FILE):
-            with open(SEEN_COMPANIES_FILE) as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return []
-
-def is_recently_seen(website: str, days: int) -> bool:
-    if not website or days == 0:
-        return False
-    cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-    for e in load_seen_companies():
-        if (e.get("website","").lower() == website.lower()
-                and e.get("date_found","") >= cutoff):
-            return True
-    return False
-
-def add_to_seen_log(companies: list):
-    existing      = load_seen_companies()
-    existing_sites = {e.get("website","").lower() for e in existing}
-    today         = datetime.now().strftime("%Y-%m-%d")
-    for c in companies:
-        site = c.get("website","").lower()
-        if site and site not in existing_sites:
-            existing.append({
-                "website"      : c.get("website",""),
-                "company_name" : c.get("company_name",""),
-                "vertical"     : c.get("vertical",""),
-                "date_found"   : today,
-            })
-            existing_sites.add(site)
-    try:
-        with open(SEEN_COMPANIES_FILE, "w") as f:
-            json.dump(existing, f, indent=2)
-    except Exception:
-        pass
-
-# ================================================================
 # PASSWORD GATE
 # ================================================================
 def login_page():
@@ -390,7 +300,7 @@ with st.sidebar:
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
         st.rerun()
-    st.markdown("*EyeClick Reseller Finder v2.9*")
+    st.markdown("*EyeClick Reseller Finder v3.0*")
 
 # ================================================================
 # HEADER
@@ -427,462 +337,19 @@ if due_followups:
         st.markdown("---")
 
 # ================================================================
-# EYECLICK PROFILE  +  ICP  +  PER-VERTICAL VALUE PROPOSITIONS
+# BLOCKED TERRITORIES — get_blocked_territories uses st.session_state so stays here
 # ================================================================
-EYECLICK_PROFILE = """
-COMPANY: EyeClick (eyeclick.com)
-PRODUCT: Interactive projection systems — projects games & activities onto floors/walls.
-PRICE RANGE: $5,000–$30,000+ per system.
-SALES MODEL: Sold exclusively through resellers / distributors worldwide.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IDEAL CUSTOMER PROFILE (ICP) — RESELLER
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Company size: 5–500 employees
-• Already sells equipment / technology / solutions to one of EyeClick's verticals
-• Has an established sales force calling on facilities in those sectors
-• Looking to expand product portfolio or add recurring revenue
-• Strong regional presence or national distribution network
-• BONUS signals: recently hired sales staff · expanding to new regions ·
-  launched new product lines · raised funding · opened new offices
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VERTICALS · IDEAL RESELLERS · VALUE PROPOSITIONS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-SENIORS
-  End customers : senior/assisted-living facilities, nursing homes, memory care units,
-                  dementia care centres, rehabilitation centres, occupational therapy clinics.
-  Ideal resellers: senior-care product distributors, cognitive stimulation equipment suppliers,
-                   sensory room providers, rehab/OT equipment companies, nursing home tech suppliers.
-  VALUE PROPOSITION FOR EMAIL:
-    "EyeClick's interactive projection system is purpose-built for senior engagement —
-     it projects games and activities directly onto floors and walls, requiring no
-     hand-held devices, making it ideal for residents with limited mobility or cognitive
-     decline. Facilities report measurable improvements in social engagement and motor
-     activity. It's a natural complement to your existing senior care product portfolio."
-
-EDUCATION
-  End customers : K-12 schools, elementary schools, early-education/preschools,
-                  daycare centres, special-education programmes.
-  Ideal resellers: EdTech companies, school AV/furniture/playground equipment suppliers,
-                   special-education technology providers, early childhood learning distributors.
-  VALUE PROPOSITION FOR EMAIL:
-    "EyeClick transforms any floor into an interactive learning environment — no screens,
-     no devices, just pure physical play that develops motor skills, literacy and numeracy.
-     Schools see measurable improvements in engagement and physical activity. It fits
-     perfectly alongside your existing furniture, AV, or playground product lines."
-
-ENTERTAINMENT
-  End customers : trampoline parks, family entertainment centres (FECs),
-                  QSRs with play areas, indoor playgrounds, bowling alleys, leisure centres.
-  Ideal resellers: amusement/FEC equipment suppliers, playground equipment distributors,
-                   entertainment technology companies, arcade/attractions dealers, leisure tech firms.
-  VALUE PROPOSITION FOR EMAIL:
-    "EyeClick adds a unique, high-margin interactive attraction that drives repeat visits
-     and longer dwell time. FEC operators report 20–35% increase in repeat customers after
-     installing EyeClick zones. With a typical ROI under 12 months, it's one of the
-     strongest upsells you can offer your FEC and trampoline park clients."
-"""
-
-# ================================================================
-# GOLD EXAMPLES — real EyeClick resellers used as pattern-matching
-# ================================================================
-GOLD_EXAMPLES = {
-    "Seniors": [
-        {
-            "name"    : "CDS Boutique",
-            "website" : "https://cdsboutique.com/en/",
-            "country" : "Canada",
-            "summary" : "Distributor of cognitive stimulation, sensory and activity products "
-                        "for senior care facilities, nursing homes and memory care units in Canada.",
-        },
-        {
-            "name"    : "Fu Kang Healthcare",
-            "website" : "https://fukanghealthcare.com/",
-            "country" : "Singapore",
-            "summary" : "Healthcare equipment and assistive technology distributor serving elderly "
-                        "care facilities, rehabilitation centres and nursing homes across Singapore.",
-        },
-        {
-            "name"    : "Pro Senectute",
-            "website" : "https://www.pro-senectute.it/",
-            "country" : "Italy",
-            "summary" : "Italian organisation supplying products and services for senior "
-                        "well-being, cognitive engagement and active ageing in care facilities.",
-        },
-    ],
-    "Education": [
-        {
-            "name"    : "Kaplan Early Learning",
-            "website" : "https://www.kaplanco.com/",
-            "country" : "USA",
-            "summary" : "National distributor of early childhood and K-12 educational materials, "
-                        "classroom furniture, learning toys and STEM supplies for schools and daycares.",
-        },
-        {
-            "name"    : "Jonti-Craft",
-            "website" : "https://www.jonti-craft.com/",
-            "country" : "USA",
-            "summary" : "Manufacturer and distributor of children's furniture, storage and "
-                        "educational equipment for K-12 schools, preschools and daycare centres.",
-        },
-        {
-            "name"    : "Southpaw Enterprises",
-            "website" : "https://www.southpaw.com/",
-            "country" : "USA",
-            "summary" : "Distributor of sensory integration, occupational therapy and special "
-                        "education equipment for schools and therapy clinics.",
-        },
-    ],
-    "Entertainment": [
-        {
-            "name"    : "Zone Leisure Technology",
-            "website" : "https://www.facebook.com/ZoneLeisureTechnology/",
-            "country" : "United Kingdom",
-            "summary" : "UK-based leisure technology company supplying interactive attractions, "
-                        "entertainment equipment and digital play solutions to FECs and leisure venues.",
-        },
-    ],
-}
-
-# ================================================================
-# BLOCKED TERRITORIES — hard-coded defaults + user-configurable
-# ================================================================
-DEFAULT_BLOCKED = [
-    {"country": "Israel",  "vertical": "ALL"},
-    {"country": "Canada",  "vertical": "Seniors"},
-]
-
 def get_blocked_territories() -> list:
-    """Merge hard-coded defaults with any user-added blocks from sidebar."""
     base  = list(DEFAULT_BLOCKED)
     extra = st.session_state.get("extra_blocked", [])
     return base + extra
 
-def is_blocked(country: str, vertical: str, blocked: list) -> bool:
-    c = country.strip().lower()
-    for b in blocked:
-        bc = b["country"].strip().lower()
-        bv = b["vertical"].strip().lower()
-        if bc == c and (bv == "all" or bv == vertical.lower()):
-            return True
-    return False
-
 # ================================================================
-# SEARCH QUERY TEMPLATES  (standard + growth-signal queries)
-# ================================================================
-QUERY_TEMPLATES = {
-    "Seniors": [
-        "senior care technology equipment distributor dealer {region}",
-        "nursing home assistive technology B2B supplier {region}",
-        "assisted living equipment reseller sales force {region}",
-        "dementia care sensory equipment specialist distributor {region}",
-        "occupational therapy senior care equipment dealer company {region}",
-        "senior living engagement technology B2B distributor {region}",
-        "care home activity technology supplier company {region}",
-    ],
-    "Education": [
-        "educational technology B2B reseller K12 schools distributor {region}",
-        "special education equipment specialist supplier {region}",
-        "early childhood education equipment B2B dealer {region}",
-        "school interactive AV equipment reseller VAR {region}",
-        "EdTech distributor company elementary schools {region}",
-        "school furniture equipment dealer expanding technology {region}",
-        "sensory playground inclusive equipment distributor {region}",
-    ],
-    "Entertainment": [
-        "trampoline park FEC equipment supplier B2B {region}",
-        "family entertainment center attractions equipment distributor {region}",
-        "indoor playground equipment specialist supplier {region}",
-        "amusement park attractions equipment dealer {region}",
-        "leisure technology interactive attractions B2B supplier {region}",
-        "FEC equipment dealer expanding interactive portfolio {region}",
-        "entertainment venue technology equipment reseller {region}",
-    ],
-}
-
-REGIONS = {
-    "🌍  Worldwide"                          : "",
-    "🇺🇸  North America"                      : "USA Canada",
-    "🇬🇧  Europe"                             : "Europe",
-    "🇩🇪  DACH (Germany/Austria/Switzerland)" : "Germany Austria Switzerland",
-    "🇫🇷  France & Benelux"                   : "France Belgium Netherlands",
-    "🇬🇧  United Kingdom"                     : "United Kingdom",
-    "🌏  Asia Pacific"                        : "Asia Pacific",
-    "🇦🇺  Australia & New Zealand"            : "Australia New Zealand",
-    "🌎  Latin America"                       : "Latin America",
-    "🌍  Middle East (excl. Israel)"          : "Middle East UAE Saudi Arabia",
-}
-
-# ================================================================
-# BACKEND
+# ANTHROPIC CLIENT
 # ================================================================
 @st.cache_resource
 def get_anthropic_client():
     return anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
-def serper_search(query: str, n: int = 6) -> list:
-    try:
-        r = requests.post(
-            "https://google.serper.dev/search",
-            headers={"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"},
-            json={"q": query, "num": n}, timeout=15,
-        )
-        r.raise_for_status()
-        return [{"title": i.get("title",""), "link": i.get("link",""), "snippet": i.get("snippet","")}
-                for i in r.json().get("organic", [])]
-    except Exception:
-        return []
-
-def analyse_companies(client, results: list, vertical: str, query: str,
-                      region_label: str, blocked: list) -> list:
-    # Build gold examples block for this vertical
-    examples = GOLD_EXAMPLES.get(vertical, [])
-    gold_block = ""
-    if examples:
-        gold_block = f"\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nGOLD EXAMPLES — find companies SIMILAR to these known EyeClick resellers:\n"
-        for ex in examples:
-            gold_block += f"  • {ex['name']} ({ex['country']}) — {ex['website']}\n    {ex['summary']}\n"
-
-    # Build blocked territories warning
-    blocked_str = "\n".join(
-        f"  • {b['country']} + {b['vertical']}" for b in blocked
-    )
-    blocked_block = f"\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nBLOCKED TERRITORIES — NEVER return companies from:\n{blocked_str}\n(EyeClick already has exclusive distributors there)\n" if blocked_str else ""
-
-    prompt = f"""You are a senior business development expert for EyeClick, identifying ideal reseller partners.
-
-{EYECLICK_PROFILE}
-{gold_block}{blocked_block}
-Search query: "{query}"  |  Vertical: {vertical}  |  Region: {region_label}
-
-Search results:
-{json.dumps(results, indent=2)}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SCORING RUBRIC (use for fit_score)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Start at 5. Add points for:
-+2  Already sells equipment/technology to EyeClick's exact end-customers
-+1  Has established sales force / distribution network
-+1  Growth signals detected (hiring, expanding, new locations, new product lines)
-+1  Strong regional/national presence
--1  Very large enterprise (500+ employees)
--2  No clear connection to EyeClick's end-customer verticals
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TASK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IDEAL RESELLER PROFILE: A company with a dedicated B2B sales force that regularly
-calls on {vertical} end-customers (care homes, schools, FECs, etc.) and actively
-resells/distributes equipment or technology products — NOT a single venue or end-user.
-
-1. HARD REJECT the following — do NOT include them even if they mention seniors/education/entertainment:
-   • Articles, blogs, news sites, directories, Wikipedia, LinkedIn profiles, job boards
-   • Finance, banking, insurance, legal, real estate, HR, unrelated software
-   • Single end-customer venues (one school, one nursing home, one FEC venue)
-   • Catalog / mail-order / online-only retailers and party supply companies
-     (e.g. S&S Worldwide, Lakeshore Learning storefront, Oriental Trading)
-   • General merchandise / promotional products distributors
-   • Companies whose primary business is consumables, crafts, or party supplies
-   • Large consumer e-commerce companies (Amazon, Walmart, etc.)
-2. HARD REJECT any company from the BLOCKED TERRITORIES listed above.
-3. PRIORITISE: specialist distributors, equipment dealers, and VARs that have physical
-   sales reps visiting {vertical} facilities and already carry comparable equipment.
-4. Score each qualifying company. Look for similarity to the GOLD EXAMPLES.
-5. For companies scoring 5+, draft a personalised email referencing their
-   specific business. Use the {vertical} VALUE PROPOSITION above.
-
-Return JSON with key "companies" → array:
-{{
-  "company_name"      : "...",
-  "website"           : "full URL including https://",
-  "country"           : "...",
-  "vertical"          : "{vertical}",
-  "description"       : "One sentence: what they sell and to whom.",
-  "fit_score"         : <integer 5-10>,
-  "fit_reason"        : "2-3 sentences: ICP match + similarity to gold examples.",
-  "growth_signals"    : "Growth signals found, or 'None detected'.",
-  "evidence_snippets" : ["Short paraphrased evidence point 1 from search results",
-                         "Short paraphrased evidence point 2"],
-  "contact_role"      : "CEO / Owner / VP Sales / Managing Director — most senior only",
-  "email_subject"     : "Specific, compelling subject line",
-  "email_body"        : "150-200 word personalised outreach. Open with something specific about their business. Do NOT include sign-off or signature."
-}}
-
-Include all real companies with fit_score >= 5. Return valid JSON only."""
-    raw = ""
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw  = resp.content[0].text.strip()
-        data = json.loads(raw)
-        if isinstance(data, list):
-            return data
-        for v in data.values():
-            if isinstance(v, list):
-                return v
-        return []
-    except Exception:
-        try:
-            m = re.search(r'\{.*\}', raw, re.DOTALL)
-            if m:
-                data = json.loads(m.group())
-                for v in data.values():
-                    if isinstance(v, list):
-                        return v
-        except Exception:
-            pass
-        return []
-
-def hunter_search(domain: str) -> dict:
-    domain = re.sub(r"https?://(www\.)?", "", domain).strip("/").split("/")[0]
-    if not domain:
-        return {}
-    try:
-        r = requests.get(
-            "https://api.hunter.io/v2/domain-search",
-            params={"domain": domain, "api_key": HUNTER_API_KEY, "limit": 10},
-            timeout=15,
-        )
-        r.raise_for_status()
-        emails = r.json().get("data", {}).get("emails", [])
-        if not emails:
-            return {}
-        # Strict C-level / owner priority — Sales Manager and below are last resort
-        priority = [
-            "Owner", "Co-Founder", "Founder", "CEO", "Chief Executive",
-            "President", "Managing Director", "Managing Partner",
-            "VP Sales", "VP Business", "Vice President", "Director of Sales",
-            "Sales Director", "Commercial Director", "Head of Sales",
-            "General Manager", "Country Manager", "Regional Manager",
-        ]
-        low_level = ["Sales Manager","Account Manager","Sales Representative",
-                     "Sales Executive","Business Development Manager","BDM"]
-        def score(e):
-            pos = (e.get("position") or "").upper()
-            # Penalise low-level roles heavily
-            for lw in low_level:
-                if lw.upper() in pos:
-                    return (-1, e.get("confidence",0))
-            for i, kw in enumerate(priority):
-                if kw.upper() in pos:
-                    return (len(priority)-i, e.get("confidence",0))
-            return (0, e.get("confidence",0))
-        best = sorted(emails, key=score, reverse=True)[0]
-        return {
-            "name"      : f"{best.get('first_name','')} {best.get('last_name','')}".strip(),
-            "title"     : best.get("position",""),
-            "email"     : best.get("value",""),
-            "confidence": best.get("confidence",0),
-            "linkedin"  : best.get("linkedin",""),
-        }
-    except Exception:
-        return {}
-
-def validate_website(url: str) -> bool:
-    """Return True if the URL is reachable (HTTP < 400). Uses HEAD then GET fallback."""
-    if not url or not url.startswith("http"):
-        return False
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; EyeClickBot/1.0)"}
-    try:
-        r = requests.head(url, timeout=4, allow_redirects=True, headers=headers)
-        return r.status_code < 400
-    except Exception:
-        pass
-    try:
-        r = requests.get(url, timeout=4, allow_redirects=True, headers=headers, stream=True)
-        return r.status_code < 400
-    except Exception:
-        return False
-
-def linkedin_search(client, company_name: str) -> dict:
-    """Search for the most senior person at company_name on LinkedIn.
-    Verifies the result actually mentions the company before returning it."""
-    query   = (f'site:linkedin.com/in "{company_name}" '
-               f'CEO OR "Managing Director" OR "VP" OR Owner OR President OR Founder')
-    results = serper_search(query, 8)
-    if not results:
-        return {}
-
-    # ── Verification pass: keep snippets that mention the company name ──
-    co_lower  = company_name.lower()
-    verified  = [r for r in results
-                 if co_lower in (r.get("snippet","") + r.get("title","")).lower()]
-    unverified_flag = len(verified) == 0          # no result explicitly mentioned the company
-    use_results     = verified if verified else results   # fall back to all if nothing verified
-
-    try:
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001", max_tokens=300,
-            messages=[{"role": "user", "content":
-                f'From these LinkedIn search results, find the most senior person who actually '
-                f'WORKS AT "{company_name}". If no result clearly shows someone at that company, '
-                f'set works_at_company to false.\n'
-                f'{json.dumps(use_results)}\n'
-                'Return JSON only (no markdown): '
-                '{{"name":"","title":"","linkedin":"https://linkedin.com/in/...","works_at_company":true}}'}],
-        )
-        m = re.search(r'\{.*?\}', resp.content[0].text, re.DOTALL)
-        if not m:
-            return {}
-        data = json.loads(m.group())
-        if not data.get("works_at_company", True):
-            return {}                              # Haiku itself flagged the match as wrong
-        data["linkedin_unverified"] = unverified_flag
-        return data
-    except Exception:
-        return {}
-
-def enrich_contact(client, company: dict) -> dict:
-    contact = {"name":"","title":"","email":"","confidence":"","linkedin":"","linkedin_unverified":False}
-    h = hunter_search(company.get("website",""))
-    if h:
-        contact.update({"name"      : h.get("name",""),
-                        "title"     : h.get("title",""),
-                        "email"     : h.get("email",""),
-                        "confidence": f"{h.get('confidence',0)}%" if h.get("confidence") else "",
-                        "linkedin"  : h.get("linkedin","")})
-    if not contact["name"] or not contact["linkedin"]:
-        li = linkedin_search(client, company.get("company_name",""))
-        if li:
-            if not contact["name"]:
-                contact["name"]  = li.get("name","")
-                contact["title"] = li.get("title","")
-            if not contact["linkedin"]:
-                contact["linkedin"]            = li.get("linkedin","")
-                contact["linkedin_unverified"] = li.get("linkedin_unverified", False)
-    return contact
-
-def generate_followup_email(client, company: dict, contact: dict, original_subject: str) -> str:
-    """Ask Claude to write a personalised follow-up email for a company that has not replied."""
-    first_name = contact.get("name","").split()[0] if contact.get("name") else "there"
-    prompt = (
-        f"You are a business development expert for EyeClick (eyeclick.com), "
-        f"an interactive projection system sold exclusively through resellers worldwide.\n\n"
-        f"Company: {company.get('company_name','')}\n"
-        f"What they do: {company.get('description','')}\n"
-        f"Why they fit: {company.get('fit_reason','')}\n"
-        f"Contact first name: {first_name}\n"
-        f"Original email subject: {original_subject}\n\n"
-        f"Write a short (80-120 word), friendly follow-up email for someone who has not replied "
-        f"to the first outreach. Reference that it is a follow-up. Be specific to their business. "
-        f"Ask for a 15-minute call. Do NOT include any sign-off, greeting opener beyond 'Hi {first_name},' "
-        f"or signature — just the body text starting with 'Hi {first_name},'.\n"
-        f"Return only the email body text, no extra commentary."
-    )
-    try:
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001", max_tokens=400,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text.strip()
-    except Exception:
-        return ""
 
 # ================================================================
 # EXCEL EXPORT
@@ -1041,8 +508,8 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
         # Full email = body + signature (combined only for sending)
         full_email = body + ("\n\n" + sig if sig else "")
 
-        # ── 3 action buttons ──
-        a1, a2, a3 = st.columns(3)
+        # ── 4 action buttons ──
+        a1, a2, a3, a4 = st.columns(4)
 
         # Open in email client (mailto)
         if email_raw:
@@ -1074,6 +541,25 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
         # Visit LinkedIn
         if has_linkedin:
             a3.link_button("👁 Visit LinkedIn", linkedin_raw, use_container_width=True)
+
+        # Add to outreach queue
+        if email_raw:
+            if a4.button("➕ Queue", key=f"queue_{key_prefix}_{hash(website_raw)}", use_container_width=True):
+                item = {
+                    "id"           : str(uuid.uuid4()),
+                    "type"         : "initial",
+                    "company_name" : company_name_raw,
+                    "website"      : website_raw,
+                    "vertical"     : vertical,
+                    "contact_name" : contact.get("name",""),
+                    "contact_email": email_raw,
+                    "subject"      : st.session_state.get(subj_key, r.get("email_subject","")),
+                    "body"         : st.session_state.get(body_key, r.get("email_body","")),
+                    "queued_date"  : datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "status"       : "pending",
+                    "sent_date"    : None,
+                }
+                st.toast("✅ Added to Outreach Queue" if add_to_queue(item) else "⚠️ Already in queue")
 
         # ── Copy full email preview ──
         full_preview = body + ("\n\n" + sig if sig else "")
@@ -1159,6 +645,123 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
                 st.success("✅ LinkedIn issue noted. Please use the correct profile if you find it.")
             else:
                 st.success("✅ Details issue reported — thank you!")
+
+# ================================================================
+# OUTREACH QUEUE TAB RENDERER
+# ================================================================
+def _render_outreach_queue_tab():
+    queue      = load_queue()
+    pending    = [i for i in queue if i["status"] == "pending"]
+    today_str  = datetime.now().strftime("%Y-%m-%d")
+    sent_today = [i for i in queue if i["status"] == "sent"
+                  and (i.get("sent_date") or "").startswith(today_str)]
+    skipped    = [i for i in queue if i["status"] == "skipped"]
+
+    cb1, cb2, cb3 = st.columns(3)
+    cb1.metric("⏳ Pending",    len(pending))
+    cb2.metric("✅ Sent Today", len(sent_today))
+    cb3.metric("⏭ Skipped",    len(skipped))
+
+    if not pending:
+        st.info("No pending emails. Use the ➕ Queue button on any result card to stage emails for sending.")
+        return
+
+    sig = st.session_state.get("signature", "")
+
+    if not GMAIL_USER or not GMAIL_APP_PASSWORD:
+        st.warning("⚠️ Gmail not configured. Add **GMAIL_USER** and **GMAIL_APP_PASSWORD** to your secrets to enable sending.")
+
+    if st.button("🚀 Send All Pending", use_container_width=True, key="send_all_pending"):
+        if not GMAIL_USER or not GMAIL_APP_PASSWORD:
+            st.error("Set Gmail credentials first (see Settings).")
+        else:
+            sent_count, errors = 0, []
+            for item in pending:
+                ok = send_gmail(
+                    to=item["contact_email"], subject=item["subject"],
+                    body=item["body"], signature=sig,
+                    gmail_user=GMAIL_USER, gmail_app_password=GMAIL_APP_PASSWORD,
+                )
+                if ok:
+                    mark_queue_item(item["id"], "sent")
+                    fu_date = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
+                    append_sent_log({
+                        "company"       : item["company_name"],
+                        "website"       : item["website"],
+                        "email"         : item["contact_email"],
+                        "subject"       : item["subject"],
+                        "sent_date"     : datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "follow_up_date": fu_date,
+                        "follow_up_done": False,
+                    })
+                    if item["type"] == "followup":
+                        mark_followup_done(item["company_name"])
+                    sent_count += 1
+                else:
+                    errors.append(item["company_name"])
+            if sent_count:
+                st.success(f"✅ {sent_count} email(s) sent!")
+            if errors:
+                st.error(f"Failed to send: {', '.join(errors)}")
+            st.rerun()
+
+    st.markdown("---")
+
+    for item in pending:
+        with st.expander(f"✉️ **{item['company_name']}** — {item['contact_email']}  ·  {item.get('vertical','')}"):
+            qsubj_key = f"q_subj_{item['id']}"
+            qbody_key = f"q_body_{item['id']}"
+            if qsubj_key not in st.session_state:
+                st.session_state[qsubj_key] = item["subject"]
+            if qbody_key not in st.session_state:
+                st.session_state[qbody_key] = item["body"]
+
+            edited_subj = st.text_input("Subject", key=qsubj_key)
+            edited_body = st.text_area("Body", key=qbody_key, height=180)
+
+            # Persist edits back to queue file immediately
+            if edited_subj != item["subject"] or edited_body != item["body"]:
+                q_all = load_queue()
+                for qi in q_all:
+                    if qi["id"] == item["id"]:
+                        qi["subject"] = edited_subj
+                        qi["body"]    = edited_body
+                save_queue(q_all)
+
+            if sig:
+                st.caption("✍️ *Signature will be appended at send time*")
+
+            c1, c2 = st.columns(2)
+            if c1.button("📤 Send Now", key=f"send_now_{item['id']}", use_container_width=True):
+                if not GMAIL_USER or not GMAIL_APP_PASSWORD:
+                    st.error("Set Gmail credentials first.")
+                else:
+                    ok = send_gmail(
+                        to=item["contact_email"], subject=edited_subj,
+                        body=edited_body, signature=sig,
+                        gmail_user=GMAIL_USER, gmail_app_password=GMAIL_APP_PASSWORD,
+                    )
+                    if ok:
+                        mark_queue_item(item["id"], "sent")
+                        fu_date = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
+                        append_sent_log({
+                            "company"       : item["company_name"],
+                            "website"       : item["website"],
+                            "email"         : item["contact_email"],
+                            "subject"       : edited_subj,
+                            "sent_date"     : datetime.now().strftime("%Y-%m-%d %H:%M"),
+                            "follow_up_date": fu_date,
+                            "follow_up_done": False,
+                        })
+                        if item["type"] == "followup":
+                            mark_followup_done(item["company_name"])
+                        st.success(f"✅ Sent to {item['contact_email']}")
+                        st.rerun()
+                    else:
+                        st.error("Send failed — check Gmail credentials in secrets.")
+            if c2.button("⏭ Skip", key=f"skip_{item['id']}", use_container_width=True):
+                mark_queue_item(item["id"], "skipped")
+                st.rerun()
 
 # ================================================================
 # SEARCH FORM
@@ -1284,13 +887,13 @@ if final:
     s6.metric("With Email",       with_email)
     st.markdown("---")
 
-    tabs   = st.tabs(["📋 All Results", "👴 Seniors", "🏫 Education", "🎯 Entertainment"])
+    tabs   = st.tabs(["📋 All Results", "👴 Seniors", "🏫 Education", "🎯 Entertainment", "📬 Outreach Queue"])
 
     with tabs[0]:
         for i, r in enumerate(final, 1):
             result_card(r, i, key_prefix="all")
 
-    for tab, vertical in zip(tabs[1:], ["Seniors","Education","Entertainment"]):
+    for tab, vertical in zip(tabs[1:4], ["Seniors","Education","Entertainment"]):
         with tab:
             vlist = groups[vertical]
             if vlist:
@@ -1298,6 +901,9 @@ if final:
                     result_card(r, i, key_prefix=vertical.lower())
             else:
                 st.info(f"No {vertical} companies found in this search.")
+
+    with tabs[4]:
+        _render_outreach_queue_tab()
 
     st.markdown("---")
     excel_bytes = build_excel(final)
@@ -1310,7 +916,7 @@ if final:
     )
 else:
     st.markdown("""
-    <div style='text-align:center;padding:3rem;color:#888;'>
+    <div style='text-align:center;padding:2rem;color:#888;'>
       <span style='font-size:3rem;'>🔍</span>
       <p style='font-size:1.1rem;margin-top:1rem;'>
         Select your verticals and region above, then hit <strong>SEARCH</strong><br>
@@ -1318,3 +924,6 @@ else:
       </p>
     </div>
     """, unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("### 📬 Outreach Queue")
+    _render_outreach_queue_tab()
