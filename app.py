@@ -102,6 +102,7 @@ st.set_page_config(
 st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
   html, body, [class*="css"], [data-testid] {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
@@ -185,21 +186,15 @@ st.markdown("""
   }
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
-      display: flex !important;
-      align-items: center !important;
   }
-  /* Prevent the Material Icons arrow text from overlapping the label */
-  div[data-testid="stExpander"] summary > span:first-child,
-  div[data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"] {
-      flex-shrink: 0 !important;
-      min-width: 20px !important;
-      overflow: hidden !important;
-  }
-  div[data-testid="stExpander"] summary > div,
-  div[data-testid="stExpander"] summary > p {
-      flex: 1 !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
+  /* Ensure Material Icons renders as icon, not raw text */
+  .material-icons {
+      font-family: 'Material Icons' !important;
+      font-feature-settings: 'liga' !important;
+      -webkit-font-feature-settings: 'liga' !important;
+      font-size: 20px !important;
+      line-height: 1 !important;
+      vertical-align: middle !important;
   }
 
   /* ── Metric tiles ── */
