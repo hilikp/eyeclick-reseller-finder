@@ -187,27 +187,12 @@ st.markdown("""
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
   }
-  /* ── Expander arrow: hide broken Material Icons text, use CSS arrow instead ── */
-  div[data-testid="stExpander"] details > summary {
-      list-style: none !important;
-  }
-  div[data-testid="stExpander"] details > summary::-webkit-details-marker {
-      display: none !important;
-  }
-  /* Hide ALL spans inside summary (the broken _arrow_right text) */
-  div[data-testid="stExpander"] details > summary > span,
-  div[data-testid="stExpander"] details > summary svg {
-      display: none !important;
-  }
-  /* Replace with a clean CSS-only arrow */
-  div[data-testid="stExpander"] details > summary::before {
-      content: '▸ ' !important;
-      color: #5B5CD6 !important;
-      font-size: 14px !important;
-      font-family: sans-serif !important;
-  }
-  div[data-testid="stExpander"] details[open] > summary::before {
-      content: '▾ ' !important;
+  /* Fix: hide only the toggle icon SVG, not the label */
+  div[data-testid="stExpanderToggleIcon"] {
+      overflow: hidden !important;
+      max-width: 24px !important;
+      max-height: 24px !important;
+      flex-shrink: 0 !important;
   }
 
   /* ── Metric tiles ── */
