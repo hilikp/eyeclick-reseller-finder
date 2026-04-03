@@ -501,50 +501,225 @@ Include all real companies with fit_score >= 5. Return valid JSON only."""
         return []
 
 # ================================================================
-# HUNTER SEARCH
+# EMAIL FINDER — shared title scoring used by all providers
 # ================================================================
+_PRIORITY_TITLES = [
+    "Owner", "Co-Founder", "Founder", "CEO", "Chief Executive",
+    "President", "Managing Director", "Managing Partner",
+    "VP Sales", "VP Business", "Vice President", "Director of Sales",
+    "Sales Director", "Commercial Director", "Head of Sales",
+    "General Manager", "Country Manager", "Regional Manager",
+]
+_LOW_TITLES = [
+    "Sales Manager", "Account Manager", "Sales Representative",
+    "Sales Executive", "Business Development Manager", "BDM",
+]
+
+def _score_title(position: str, confidence: int = 0) -> tuple:
+    pos = (position or "").upper()
+    for lw in _LOW_TITLES:
+        if lw.upper() in pos:
+            return (-1, confidence)
+    for i, kw in enumerate(_PRIORITY_TITLES):
+        if kw.upper() in pos:
+            return (len(_PRIORITY_TITLES) - i, confidence)
+    return (0, confidence)
+
+def _clean_domain(url: str) -> str:
+    return re.sub(r"https?://(www\.)?", "", url).strip("/").split("/")[0]
+
+# ── Hunter.io ──────────────────────────────────────────────────────────────
 def hunter_search(domain: str, hunter_api_key: str) -> dict:
-    domain = re.sub(r"https?://(www\.)?", "", domain).strip("/").split("/")[0]
-    if not domain:
+    domain = _clean_domain(domain)
+    if not domain or not hunter_api_key:
         return {}
     try:
         r = requests.get(
             "https://api.hunter.io/v2/domain-search",
             params={"domain": domain, "api_key": hunter_api_key, "limit": 10},
-            timeout=15,
+            timeout=12,
         )
+        if r.status_code == 429 or r.status_code == 401:
+            return {}          # quota exhausted or bad key — signal fallback
         r.raise_for_status()
         emails = r.json().get("data", {}).get("emails", [])
         if not emails:
             return {}
-        priority  = [
-            "Owner", "Co-Founder", "Founder", "CEO", "Chief Executive",
-            "President", "Managing Director", "Managing Partner",
-            "VP Sales", "VP Business", "Vice President", "Director of Sales",
-            "Sales Director", "Commercial Director", "Head of Sales",
-            "General Manager", "Country Manager", "Regional Manager",
-        ]
-        low_level = ["Sales Manager","Account Manager","Sales Representative",
-                     "Sales Executive","Business Development Manager","BDM"]
-        def score(e):
-            pos = (e.get("position") or "").upper()
-            for lw in low_level:
-                if lw.upper() in pos:
-                    return (-1, e.get("confidence",0))
-            for i, kw in enumerate(priority):
-                if kw.upper() in pos:
-                    return (len(priority)-i, e.get("confidence",0))
-            return (0, e.get("confidence",0))
-        best = sorted(emails, key=score, reverse=True)[0]
+        best = sorted(emails,
+                      key=lambda e: _score_title(e.get("position",""), e.get("confidence",0)),
+                      reverse=True)[0]
         return {
             "name"      : f"{best.get('first_name','')} {best.get('last_name','')}".strip(),
             "title"     : best.get("position",""),
             "email"     : best.get("value",""),
             "confidence": best.get("confidence",0),
             "linkedin"  : best.get("linkedin",""),
+            "source"    : "hunter",
         }
     except Exception:
         return {}
+
+# ── Apollo.io ──────────────────────────────────────────────────────────────
+def apollo_search(domain: str, apollo_api_key: str) -> dict:
+    domain = _clean_domain(domain)
+    if not domain or not apollo_api_key:
+        return {}
+    try:
+        r = requests.post(
+            "https://api.apollo.io/v1/people/match",
+            headers={"Content-Type": "application/json",
+                     "Cache-Control": "no-cache",
+                     "X-Api-Key": apollo_api_key},
+            json={"domain": domain,
+                  "reveal_personal_emails": False,
+                  "reveal_phone_number": False},
+            timeout=12,
+        )
+        if r.status_code in (401, 403, 429):
+            return {}
+        r.raise_for_status()
+        person = r.json().get("person") or {}
+        email  = person.get("email","")
+        if not email:
+            # Try organization people list
+            r2 = requests.post(
+                "https://api.apollo.io/v1/mixed_people/search",
+                headers={"Content-Type": "application/json", "X-Api-Key": apollo_api_key},
+                json={"q_organization_domains": domain, "page": 1, "per_page": 10,
+                      "person_seniorities": ["owner","founder","c_suite","vp","director","manager"]},
+                timeout=12,
+            )
+            if r2.status_code == 200:
+                people = r2.json().get("people", [])
+                if people:
+                    best = sorted(people,
+                                  key=lambda p: _score_title(p.get("title",""), 0),
+                                  reverse=True)[0]
+                    email = best.get("email","")
+                    return {
+                        "name"      : best.get("name",""),
+                        "title"     : best.get("title",""),
+                        "email"     : email,
+                        "confidence": 80 if email else 0,
+                        "linkedin"  : best.get("linkedin_url",""),
+                        "source"    : "apollo",
+                    }
+            return {}
+        return {
+            "name"      : person.get("name",""),
+            "title"     : person.get("title",""),
+            "email"     : email,
+            "confidence": 80 if email else 0,
+            "linkedin"  : person.get("linkedin_url",""),
+            "source"    : "apollo",
+        }
+    except Exception:
+        return {}
+
+# ── Snov.io ────────────────────────────────────────────────────────────────
+def snov_search(domain: str, snov_client_id: str, snov_client_secret: str) -> dict:
+    domain = _clean_domain(domain)
+    if not domain or not snov_client_id or not snov_client_secret:
+        return {}
+    try:
+        # Step 1: get access token
+        tok = requests.post(
+            "https://api.snov.io/v1/oauth/access_token",
+            json={"grant_type": "client_credentials",
+                  "client_id": snov_client_id,
+                  "client_secret": snov_client_secret},
+            timeout=10,
+        )
+        if tok.status_code != 200:
+            return {}
+        token = tok.json().get("access_token","")
+        if not token:
+            return {}
+        # Step 2: domain search
+        r = requests.post(
+            "https://api.snov.io/v2/domain-emails-with-info",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"domain": domain, "type": "all", "limit": 10},
+            timeout=12,
+        )
+        if r.status_code in (401, 403, 429):
+            return {}
+        r.raise_for_status()
+        emails = r.json().get("emails", [])
+        if not emails:
+            return {}
+        best = sorted(emails,
+                      key=lambda e: _score_title(e.get("position",""), e.get("confidence",0)),
+                      reverse=True)[0]
+        email_addr = best.get("email","")
+        return {
+            "name"      : f"{best.get('firstName','')} {best.get('lastName','')}".strip(),
+            "title"     : best.get("position",""),
+            "email"     : email_addr,
+            "confidence": best.get("confidence", 70) if email_addr else 0,
+            "linkedin"  : best.get("linkedIn",""),
+            "source"    : "snov",
+        }
+    except Exception:
+        return {}
+
+# ── Prospeo ────────────────────────────────────────────────────────────────
+def prospeo_search(domain: str, prospeo_api_key: str) -> dict:
+    domain = _clean_domain(domain)
+    if not domain or not prospeo_api_key:
+        return {}
+    try:
+        r = requests.get(
+            "https://api.prospeo.io/domain-search",
+            headers={"X-KEY": prospeo_api_key},
+            params={"domain": domain, "limit": 10},
+            timeout=12,
+        )
+        if r.status_code in (401, 403, 429):
+            return {}
+        r.raise_for_status()
+        emails = r.json().get("response", {}).get("emails", [])
+        if not emails:
+            return {}
+        best = sorted(emails,
+                      key=lambda e: _score_title(e.get("seniority",""), 0),
+                      reverse=True)[0]
+        email_addr = best.get("email","")
+        return {
+            "name"      : f"{best.get('first_name','')} {best.get('last_name','')}".strip(),
+            "title"     : best.get("position",""),
+            "email"     : email_addr,
+            "confidence": 75 if email_addr else 0,
+            "linkedin"  : best.get("linkedin",""),
+            "source"    : "prospeo",
+        }
+    except Exception:
+        return {}
+
+# ── Fallback chain: Hunter → Apollo → Snov → Prospeo ─────────────────────
+def find_contact_email(domain: str, keys: dict) -> dict:
+    """Try email finders in order until one returns a result.
+    keys dict: hunter_api_key, apollo_api_key, snov_client_id,
+               snov_client_secret, prospeo_api_key  (all optional)
+    Returns same dict format as hunter_search, plus 'source' field."""
+    result = hunter_search(domain, keys.get("hunter_api_key",""))
+    if result.get("email"):
+        return result
+
+    result = apollo_search(domain, keys.get("apollo_api_key",""))
+    if result.get("email"):
+        return result
+
+    result = snov_search(domain, keys.get("snov_client_id",""),
+                         keys.get("snov_client_secret",""))
+    if result.get("email"):
+        return result
+
+    result = prospeo_search(domain, keys.get("prospeo_api_key",""))
+    if result.get("email"):
+        return result
+
+    return {}
 
 # ================================================================
 # VALIDATE WEBSITE
@@ -605,15 +780,24 @@ def linkedin_search(client, company_name: str, serper_api_key: str) -> dict:
 # ================================================================
 # ENRICH CONTACT
 # ================================================================
-def enrich_contact(client, company: dict, serper_api_key: str, hunter_api_key: str) -> dict:
+def enrich_contact(client, company: dict, serper_api_key: str,
+                   email_keys) -> dict:
+    """email_keys may be a plain hunter_api_key string (legacy) or a dict with
+    hunter_api_key / apollo_api_key / snov_client_id / snov_client_secret /
+    prospeo_api_key keys."""
     contact = {"name":"","title":"","email":"","confidence":"","linkedin":"","linkedin_unverified":False}
-    h = hunter_search(company.get("website",""), hunter_api_key)
-    if h:
+    # Normalise legacy callers that pass a plain string
+    if isinstance(email_keys, str):
+        email_keys = {"hunter_api_key": email_keys}
+
+    h = find_contact_email(company.get("website",""), email_keys)
+    if h and h.get("email"):
         contact.update({"name"      : h.get("name",""),
                         "title"     : h.get("title",""),
                         "email"     : h.get("email",""),
                         "confidence": f"{h.get('confidence',0)}%" if h.get("confidence") else "",
-                        "linkedin"  : h.get("linkedin","")})
+                        "linkedin"  : h.get("linkedin",""),
+                        "email_source": h.get("source","")})
     if not contact["name"] or not contact["linkedin"]:
         li = linkedin_search(client, company.get("company_name",""), serper_api_key)
         if li:

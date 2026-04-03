@@ -49,13 +49,15 @@ def load_secrets() -> dict:
 
 def log(msg: str):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{ts}] {msg}", flush=True)
+    # encode to CP1252 (Windows CMD default) replacing unknown chars
+    safe = msg.encode("cp1252", errors="replace").decode("cp1252")
+    print(f"[{ts}] {safe}", flush=True)
 
 def run():
     log("=== EyeClick Daily Worker starting ===")
     secrets = load_secrets()
 
-    required = ["ANTHROPIC_API_KEY", "SERPER_API_KEY", "HUNTER_API_KEY",
+    required = ["ANTHROPIC_API_KEY", "SERPER_API_KEY",
                 "GMAIL_USER", "GMAIL_APP_PASSWORD"]
     for key in required:
         if not secrets.get(key):
@@ -65,6 +67,13 @@ def run():
     client     = anthropic.Anthropic(api_key=secrets["ANTHROPIC_API_KEY"])
     region_kw  = REGIONS.get(REGION_LABEL, "")
     blocked    = list(DEFAULT_BLOCKED)
+    email_keys = {
+        "hunter_api_key"    : secrets.get("HUNTER_API_KEY", ""),
+        "apollo_api_key"    : secrets.get("APOLLO_API_KEY", ""),
+        "snov_client_id"    : secrets.get("SNOV_CLIENT_ID", ""),
+        "snov_client_secret": secrets.get("SNOV_CLIENT_SECRET", ""),
+        "prospeo_api_key"   : secrets.get("PROSPEO_API_KEY", ""),
+    }
     seen_sites : set = set()
     all_companies   : list = []
 
@@ -133,7 +142,7 @@ def run():
         log(f"  [{i+1}/{len(final)}] {company.get('company_name','')}")
         company["contact"]    = enrich_contact(client, company,
                                                secrets["SERPER_API_KEY"],
-                                               secrets["HUNTER_API_KEY"])
+                                               email_keys)
         company["website_ok"] = validate_website(company.get("website",""))
         time.sleep(0.6)
 

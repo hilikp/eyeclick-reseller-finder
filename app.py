@@ -41,9 +41,24 @@ def _logo_img_tag(dark_bg: bool = True) -> str:
 APP_PASSWORD      = st.secrets["APP_PASSWORD"]
 ANTHROPIC_API_KEY = st.secrets["ANTHROPIC_API_KEY"]
 SERPER_API_KEY    = st.secrets["SERPER_API_KEY"]
-HUNTER_API_KEY    = st.secrets["HUNTER_API_KEY"]
+HUNTER_API_KEY    = st.secrets.get("HUNTER_API_KEY", "")
 GMAIL_USER         = st.secrets.get("GMAIL_USER", "")
 GMAIL_APP_PASSWORD = st.secrets.get("GMAIL_APP_PASSWORD", "")
+EMAIL_SIGNATURE    = st.secrets.get("EMAIL_SIGNATURE",
+    "Best,\n\nYehiel Polatov\nHead of Global Business Development\nBEAM | Obie | Obie for Seniors")
+# Email-finder fallback providers (all optional)
+APOLLO_API_KEY    = st.secrets.get("APOLLO_API_KEY", "")
+SNOV_CLIENT_ID    = st.secrets.get("SNOV_CLIENT_ID", "")
+SNOV_CLIENT_SECRET = st.secrets.get("SNOV_CLIENT_SECRET", "")
+PROSPEO_API_KEY   = st.secrets.get("PROSPEO_API_KEY", "")
+
+EMAIL_KEYS = {
+    "hunter_api_key"    : HUNTER_API_KEY,
+    "apollo_api_key"    : APOLLO_API_KEY,
+    "snov_client_id"    : SNOV_CLIENT_ID,
+    "snov_client_secret": SNOV_CLIENT_SECRET,
+    "prospeo_api_key"   : PROSPEO_API_KEY,
+}
 
 # ── Import shared constants + pure-logic functions from backend.py ──
 from backend import (
@@ -65,7 +80,7 @@ def hunter_search(domain: str) -> dict:
     return backend.hunter_search(domain, HUNTER_API_KEY)
 
 def enrich_contact(client, company: dict) -> dict:
-    return backend.enrich_contact(client, company, SERPER_API_KEY, HUNTER_API_KEY)
+    return backend.enrich_contact(client, company, SERPER_API_KEY, EMAIL_KEYS)
 
 def analyse_companies(client, results, vertical, query, region_label, blocked):
     return backend.analyse_companies(client, results, vertical, query, region_label, blocked)
@@ -226,7 +241,7 @@ with st.sidebar:
     # Signature
     st.markdown("**📝 Your Email Signature**")
     if "signature" not in st.session_state:
-        st.session_state["signature"] = ""
+        st.session_state["signature"] = EMAIL_SIGNATURE
     new_sig = st.text_area(
         "sig", value=st.session_state["signature"], height=130,
         placeholder="Best regards,\nYour Name\nEyeClick | Business Development\n+1 234 567 8900",
@@ -505,8 +520,9 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
         else:
             st.caption("💡 Add your signature in the ⚙️ **Settings** panel on the left — it will appear here automatically.")
 
-        # Full email = body + signature (combined only for sending)
-        full_email = body + ("\n\n" + sig if sig else "")
+        # Full email = greeting + body + signature (combined only for sending)
+        contact_name_raw = contact.get("name","") if contact else ""
+        full_email = _greeting(contact_name_raw) + "\n\n" + body + ("\n\n" + sig if sig else "")
 
         # ── 4 action buttons ──
         a1, a2, a3, a4 = st.columns(4)
@@ -648,6 +664,10 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
 
 # ================================================================
 # OUTREACH QUEUE TAB RENDERER
+def _greeting(contact_name: str) -> str:
+    first = contact_name.strip().split()[0] if contact_name.strip() else ""
+    return f"Hi {first}," if first else "Hi,"
+
 # ================================================================
 def _render_outreach_queue_tab():
     queue      = load_queue()
@@ -677,9 +697,10 @@ def _render_outreach_queue_tab():
         else:
             sent_count, errors = 0, []
             for item in pending:
+                full_body = _greeting(item.get("contact_name","")) + "\n\n" + item["body"]
                 ok = send_gmail(
                     to=item["contact_email"], subject=item["subject"],
-                    body=item["body"], signature=sig,
+                    body=full_body, signature=sig,
                     gmail_user=GMAIL_USER, gmail_app_password=GMAIL_APP_PASSWORD,
                 )
                 if ok:
@@ -755,9 +776,10 @@ def _render_outreach_queue_tab():
                 if not GMAIL_USER or not GMAIL_APP_PASSWORD:
                     st.error("Set Gmail credentials first.")
                 else:
+                    full_body = _greeting(item.get("contact_name","")) + "\n\n" + edited_body
                     ok = send_gmail(
                         to=item["contact_email"], subject=edited_subj,
-                        body=edited_body, signature=sig,
+                        body=full_body, signature=sig,
                         gmail_user=GMAIL_USER, gmail_app_password=GMAIL_APP_PASSWORD,
                     )
                     if ok:
