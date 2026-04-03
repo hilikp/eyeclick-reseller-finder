@@ -185,6 +185,21 @@ st.markdown("""
   }
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
+      display: flex !important;
+      align-items: center !important;
+  }
+  /* Prevent the Material Icons arrow text from overlapping the label */
+  div[data-testid="stExpander"] summary > span:first-child,
+  div[data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"] {
+      flex-shrink: 0 !important;
+      min-width: 20px !important;
+      overflow: hidden !important;
+  }
+  div[data-testid="stExpander"] summary > div,
+  div[data-testid="stExpander"] summary > p {
+      flex: 1 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
   }
 
   /* ── Metric tiles ── */
