@@ -187,14 +187,27 @@ st.markdown("""
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
   }
-  /* Ensure Material Icons renders as icon, not raw text */
-  .material-icons {
-      font-family: 'Material Icons' !important;
-      font-feature-settings: 'liga' !important;
-      -webkit-font-feature-settings: 'liga' !important;
-      font-size: 20px !important;
-      line-height: 1 !important;
-      vertical-align: middle !important;
+  /* ── Expander arrow: hide broken Material Icons text, use CSS arrow instead ── */
+  div[data-testid="stExpander"] details > summary {
+      list-style: none !important;
+  }
+  div[data-testid="stExpander"] details > summary::-webkit-details-marker {
+      display: none !important;
+  }
+  /* Hide ALL spans inside summary (the broken _arrow_right text) */
+  div[data-testid="stExpander"] details > summary > span,
+  div[data-testid="stExpander"] details > summary svg {
+      display: none !important;
+  }
+  /* Replace with a clean CSS-only arrow */
+  div[data-testid="stExpander"] details > summary::before {
+      content: '▸ ' !important;
+      color: #5B5CD6 !important;
+      font-size: 14px !important;
+      font-family: sans-serif !important;
+  }
+  div[data-testid="stExpander"] details[open] > summary::before {
+      content: '▾ ' !important;
   }
 
   /* ── Metric tiles ── */
