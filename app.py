@@ -760,23 +760,24 @@ def _render_outreach_queue_tab():
         score_color = "#1b8a4a" if int(score or 0) >= 8 else "#5B5CD6"
         contact_str = f"{contact_name}" + (f" · {contact_title}" if contact_title else "")
 
-        st.markdown(f"""<div class="queue-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
-              <div class="queue-card-header" style="margin:0">{icon} {item['company_name']}</div>
-              <span style="background:{score_color};color:#fff;border-radius:20px;padding:2px 10px;font-size:.8rem;font-weight:700">
-                Score {score}/10
-              </span>
-            </div>
-            <div style="color:#5B5CD6;font-size:.8rem;font-weight:600;margin-bottom:.3rem">{item.get('vertical','')}</div>
-            {f'<div style="color:#333;font-size:.88rem;margin-bottom:.3rem">{description}</div>' if description else ''}
-            {f'<div style="color:#555;font-size:.83rem;margin-bottom:.2rem"><b>Why a fit:</b> {fit_reason}</div>' if fit_reason else ''}
-            {f'<div style="color:#555;font-size:.83rem;margin-bottom:.2rem"><b>Growth:</b> {growth}</div>' if growth and growth != "None detected" else ''}
-            <div style="margin-top:.5rem;display:flex;gap:1rem;font-size:.83rem">
-              {f'<span>👤 {contact_str}</span>' if contact_name else ''}
-              {f'<span>📧 {email_disp}</span>'}
-              {f'<a href="{website}" target="_blank" style="color:#5B5CD6">🌐 Website</a>' if website else ''}
-            </div>
-        </div>""", unsafe_allow_html=True)
+        contact_html = f'<span>👤 {contact_str}</span>' if contact_name else ''
+        website_html = f'<a href="{website}" target="_blank" style="color:#5B5CD6">🌐 Website</a>' if website else ''
+        desc_html    = f'<div style="color:#333;font-size:.88rem;margin-bottom:.3rem">{description}</div>' if description else ''
+        fit_html     = f'<div style="color:#555;font-size:.83rem;margin-bottom:.2rem"><b>Why a fit:</b> {fit_reason}</div>' if fit_reason else ''
+        growth_html  = f'<div style="color:#555;font-size:.83rem;margin-bottom:.2rem"><b>Growth:</b> {growth}</div>' if growth and growth != "None detected" else ''
+        card_html = (
+            f'<div class="queue-card">'
+            f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">'
+            f'<div class="queue-card-header" style="margin:0">{icon} {item["company_name"]}</div>'
+            f'<span style="background:{score_color};color:#fff;border-radius:20px;padding:2px 10px;font-size:.8rem;font-weight:700">Score {score}/10</span>'
+            f'</div>'
+            f'<div style="color:#5B5CD6;font-size:.8rem;font-weight:600;margin-bottom:.3rem">{item.get("vertical","")}</div>'
+            f'{desc_html}{fit_html}{growth_html}'
+            f'<div style="margin-top:.5rem;display:flex;gap:1rem;font-size:.83rem">'
+            f'{contact_html}<span>📧 {email_disp}</span>{website_html}'
+            f'</div></div>'
+        )
+        st.markdown(card_html, unsafe_allow_html=True)
 
         if not has_email:
             st.warning("No email found. Add manually, visit their website, or skip.")
