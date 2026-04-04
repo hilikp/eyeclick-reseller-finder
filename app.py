@@ -186,17 +186,21 @@ st.markdown("""
   }
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
   }
-  /* The arrow icon is the first element in summary — give it a fixed width and hide its text */
-  div[data-testid="stExpander"] summary > *:first-child {
-      font-size: 0 !important;
-      min-width: 20px !important;
-      max-width: 20px !important;
-      flex-shrink: 0 !important;
-      overflow: hidden !important;
+  /* Queue item cards */
+  .queue-card {
+      background: #fff;
+      border: 1px solid rgba(16,24,32,0.09);
+      border-left: 4px solid #5B5CD6;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.8rem;
+  }
+  .queue-card-header {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.6rem;
+      color: #101820;
   }
 
   /* ── Metric tiles ── */
@@ -744,23 +748,27 @@ def _render_outreach_queue_tab():
         has_email  = bool(item.get("contact_email"))
         email_disp = item["contact_email"] if has_email else "⚠️ no email found"
         icon = "✉️" if has_email else "🔍"
-        # Use a native st.expander with plain text label (no markdown) to avoid icon overlap bug
-        label = f"{icon} {item['company_name']} — {email_disp} · {item.get('vertical','')}"
-        with st.expander(label):
-            if not has_email:
-                st.warning("No email found for this company. You can:\n- Add an email manually below\n- Visit their website or LinkedIn to find a contact\n- Skip this entry")
-                manual_email = st.text_input("Add email manually", placeholder="contact@company.com",
-                                             key=f"manual_email_{item['id']}")
-                if manual_email and st.button("💾 Save email", key=f"save_email_{item['id']}"):
-                    q_all = load_queue()
-                    for qi in q_all:
-                        if qi["id"] == item["id"]:
-                            qi["contact_email"] = manual_email
-                    save_queue(q_all)
-                    st.success("Email saved!")
-                    st.rerun()
-                if item.get("website"):
-                    st.markdown(f"🌐 [Visit website]({item['website']})")
+
+        st.markdown(f"""<div class="queue-card">
+            <div class="queue-card-header">{icon} {item['company_name']} &nbsp;·&nbsp;
+            <span style="color:#5B5CD6;font-size:.85rem">{item.get('vertical','')}</span></div>
+            <div style="color:#555;font-size:.85rem">{email_disp}</div>
+        </div>""", unsafe_allow_html=True)
+
+        if not has_email:
+            st.warning("No email found. Add manually, visit their website, or skip.")
+            manual_email = st.text_input("Add email manually", placeholder="contact@company.com",
+                                         key=f"manual_email_{item['id']}")
+            if manual_email and st.button("💾 Save email", key=f"save_email_{item['id']}"):
+                q_all = load_queue()
+                for qi in q_all:
+                    if qi["id"] == item["id"]:
+                        qi["contact_email"] = manual_email
+                save_queue(q_all)
+                st.success("Email saved!")
+                st.rerun()
+            if item.get("website"):
+                st.markdown(f"🌐 [Visit website]({item['website']})")
 
             qsubj_key = f"q_subj_{item['id']}"
             qbody_key = f"q_body_{item['id']}"
