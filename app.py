@@ -100,14 +100,9 @@ st.set_page_config(
 )
 
 st.markdown("""
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-  .material-symbols-rounded {
-      font-family: 'Material Symbols Rounded' !important;
-      font-feature-settings: 'liga' 1 !important;
-      -webkit-font-feature-settings: 'liga' 1 !important;
-  }
+  @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 
   html, body, [class*="css"], [data-testid] {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
