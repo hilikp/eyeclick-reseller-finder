@@ -749,10 +749,33 @@ def _render_outreach_queue_tab():
         email_disp = item["contact_email"] if has_email else "⚠️ no email found"
         icon = "✉️" if has_email else "🔍"
 
+        score        = item.get("fit_score","")
+        description  = item.get("description","")
+        fit_reason   = item.get("fit_reason","")
+        growth       = item.get("growth_signals","")
+        contact_name = item.get("contact_name","")
+        contact_title= item.get("contact_title","")
+        website      = item.get("website","")
+
+        score_color = "#1b8a4a" if int(score or 0) >= 8 else "#5B5CD6"
+        contact_str = f"{contact_name}" + (f" · {contact_title}" if contact_title else "")
+
         st.markdown(f"""<div class="queue-card">
-            <div class="queue-card-header">{icon} {item['company_name']} &nbsp;·&nbsp;
-            <span style="color:#5B5CD6;font-size:.85rem">{item.get('vertical','')}</span></div>
-            <div style="color:#555;font-size:.85rem">{email_disp}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+              <div class="queue-card-header" style="margin:0">{icon} {item['company_name']}</div>
+              <span style="background:{score_color};color:#fff;border-radius:20px;padding:2px 10px;font-size:.8rem;font-weight:700">
+                Score {score}/10
+              </span>
+            </div>
+            <div style="color:#5B5CD6;font-size:.8rem;font-weight:600;margin-bottom:.3rem">{item.get('vertical','')}</div>
+            {f'<div style="color:#333;font-size:.88rem;margin-bottom:.3rem">{description}</div>' if description else ''}
+            {f'<div style="color:#555;font-size:.83rem;margin-bottom:.2rem"><b>Why a fit:</b> {fit_reason}</div>' if fit_reason else ''}
+            {f'<div style="color:#555;font-size:.83rem;margin-bottom:.2rem"><b>Growth:</b> {growth}</div>' if growth and growth != "None detected" else ''}
+            <div style="margin-top:.5rem;display:flex;gap:1rem;font-size:.83rem">
+              {f'<span>👤 {contact_str}</span>' if contact_name else ''}
+              {f'<span>📧 {email_disp}</span>'}
+              {f'<a href="{website}" target="_blank" style="color:#5B5CD6">🌐 Website</a>' if website else ''}
+            </div>
         </div>""", unsafe_allow_html=True)
 
         if not has_email:

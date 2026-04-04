@@ -161,18 +161,23 @@ def run():
             continue
         # Queue even without email — user can review and manually find contact
         item = {
-            "id"           : str(uuid.uuid4()),
-            "type"         : "initial",
-            "company_name" : company.get("company_name",""),
-            "website"      : company.get("website",""),
-            "vertical"     : company.get("vertical",""),
-            "contact_name" : contact.get("name",""),
-            "contact_email": email,   # may be empty — shown as "no email" in queue tab
-            "subject"      : company.get("email_subject",""),
-            "body"         : company.get("email_body",""),
-            "queued_date"  : datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "status"       : "pending",
-            "sent_date"    : None,
+            "id"            : str(uuid.uuid4()),
+            "type"          : "initial",
+            "company_name"  : company.get("company_name",""),
+            "website"       : company.get("website",""),
+            "vertical"      : company.get("vertical",""),
+            "contact_name"  : contact.get("name",""),
+            "contact_title" : contact.get("title",""),
+            "contact_email" : email,
+            "fit_score"     : score,
+            "description"   : company.get("description",""),
+            "fit_reason"    : company.get("fit_reason",""),
+            "growth_signals": company.get("growth_signals",""),
+            "subject"       : company.get("email_subject",""),
+            "body"          : company.get("email_body",""),
+            "queued_date"   : datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "status"        : "pending",
+            "sent_date"     : None,
         }
         if add_to_queue(item):
             initial_count += 1
