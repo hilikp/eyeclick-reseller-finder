@@ -187,14 +187,12 @@ st.markdown("""
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
   }
-  /* Fix: force Material Symbols Rounded font on expander icon spans */
-  [data-testid="stExpander"] summary span[class*="icon"],
-  [data-testid="stExpander"] summary [data-testid="stExpanderIcon"] {
-      font-family: 'Material Symbols Rounded' !important;
-      font-feature-settings: 'liga' 1 !important;
-      -webkit-font-feature-settings: 'liga' 1 !important;
-      font-size: 20px !important;
-      line-height: 1 !important;
+  /* Hide broken Material Symbols arrow text — label is in a div, icon is in a span */
+  [data-testid="stExpander"] summary > span {
+      font-size: 0 !important;
+      width: 18px !important;
+      display: inline-block !important;
+      flex-shrink: 0 !important;
   }
 
   /* ── Metric tiles ── */
