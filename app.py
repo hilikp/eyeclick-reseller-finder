@@ -186,14 +186,17 @@ st.markdown("""
   }
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
   }
-  /* Hide only the broken arrow icon — it has testid="stExpanderIcon" */
-  [data-testid="stExpanderIcon"] {
+  /* The arrow icon is the first element in summary — give it a fixed width and hide its text */
+  div[data-testid="stExpander"] summary > *:first-child {
       font-size: 0 !important;
-      width: 20px !important;
-      height: 20px !important;
+      min-width: 20px !important;
+      max-width: 20px !important;
+      flex-shrink: 0 !important;
       overflow: hidden !important;
-      display: inline-block !important;
   }
 
   /* ── Metric tiles ── */
@@ -740,7 +743,10 @@ def _render_outreach_queue_tab():
     for item in pending:
         has_email  = bool(item.get("contact_email"))
         email_disp = item["contact_email"] if has_email else "⚠️ no email found"
-        with st.expander(f"{'✉️' if has_email else '🔍'} **{item['company_name']}** — {email_disp}  ·  {item.get('vertical','')}"):
+        icon = "✉️" if has_email else "🔍"
+        # Use a native st.expander with plain text label (no markdown) to avoid icon overlap bug
+        label = f"{icon} {item['company_name']} — {email_disp} · {item.get('vertical','')}"
+        with st.expander(label):
             if not has_email:
                 st.warning("No email found for this company. You can:\n- Add an email manually below\n- Visit their website or LinkedIn to find a contact\n- Skip this entry")
                 manual_email = st.text_input("Add email manually", placeholder="contact@company.com",
