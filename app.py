@@ -187,12 +187,13 @@ st.markdown("""
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
   }
-  /* Hide broken Material Symbols arrow text — label is in a div, icon is in a span */
-  [data-testid="stExpander"] summary > span {
+  /* Hide broken Material Symbols arrow text — label is in a div, icon spans are hidden */
+  [data-testid="stExpander"] summary span {
       font-size: 0 !important;
-      width: 18px !important;
+      width: 0 !important;
+      height: 0 !important;
+      overflow: hidden !important;
       display: inline-block !important;
-      flex-shrink: 0 !important;
   }
 
   /* ── Metric tiles ── */
