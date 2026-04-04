@@ -102,7 +102,7 @@ st.set_page_config(
 st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-  @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+  @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 
   html, body, [class*="css"], [data-testid] {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
@@ -187,12 +187,14 @@ st.markdown("""
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
   }
-  /* Fix: hide only the toggle icon SVG, not the label */
-  div[data-testid="stExpanderToggleIcon"] {
-      overflow: hidden !important;
-      max-width: 24px !important;
-      max-height: 24px !important;
-      flex-shrink: 0 !important;
+  /* Fix: force Material Symbols Rounded font on expander icon spans */
+  [data-testid="stExpander"] summary span[class*="icon"],
+  [data-testid="stExpander"] summary [data-testid="stExpanderIcon"] {
+      font-family: 'Material Symbols Rounded' !important;
+      font-feature-settings: 'liga' 1 !important;
+      -webkit-font-feature-settings: 'liga' 1 !important;
+      font-size: 20px !important;
+      line-height: 1 !important;
   }
 
   /* ── Metric tiles ── */
