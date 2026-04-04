@@ -187,11 +187,11 @@ st.markdown("""
   div[data-testid="stExpander"] summary {
       font-weight: 500 !important;
   }
-  /* Hide broken Material Symbols arrow text — label is in a div, icon spans are hidden */
-  [data-testid="stExpander"] summary span {
+  /* Hide only the broken arrow icon — it has testid="stExpanderIcon" */
+  [data-testid="stExpanderIcon"] {
       font-size: 0 !important;
-      width: 0 !important;
-      height: 0 !important;
+      width: 20px !important;
+      height: 20px !important;
       overflow: hidden !important;
       display: inline-block !important;
   }
