@@ -357,7 +357,13 @@ if due_followups:
       ⏰ <strong>{len(due_followups)} follow-up(s) due today</strong> — {names.replace('**','')}
     </div>
     """, unsafe_allow_html=True)
-    with st.expander(f"📋 View {len(due_followups)} due follow-up(s)"):
+    followup_toggle_key = "show_due_followups"
+    if followup_toggle_key not in st.session_state:
+        st.session_state[followup_toggle_key] = False
+    fu_btn_label = f"{'▼' if st.session_state[followup_toggle_key] else '▶'} 📋 View {len(due_followups)} due follow-up(s)"
+    if st.button(fu_btn_label, key="toggle_due_followups_btn", use_container_width=True):
+        st.session_state[followup_toggle_key] = not st.session_state[followup_toggle_key]
+    if st.session_state[followup_toggle_key]:
         for entry in due_followups:
             c1, c2, c3 = st.columns([2, 2, 1])
             c1.markdown(f"**{entry.get('company','')}**  \n{entry.get('email','')}")
@@ -512,9 +518,15 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
         st.markdown(f"&nbsp;&nbsp;&nbsp;[🔗 LinkedIn Profile]({linkedin_raw}){unverified_note}",
                     unsafe_allow_html=True)
 
-    # ── Email editor expander ──
+    # ── Email editor toggle ──
     email_label = "✉️  Edit & Send Email" + (" — ✅ Sent" if sent else "")
-    with st.expander(f"{email_label} · {company_name_raw}"):
+    email_toggle_key = f"show_email_{key_prefix}_{hash(website_raw)}"
+    if email_toggle_key not in st.session_state:
+        st.session_state[email_toggle_key] = False
+    email_btn_label = f"{'▼' if st.session_state[email_toggle_key] else '▶'} {email_label} · {company_name_raw}"
+    if st.button(email_btn_label, key=f"toggle_email_btn_{key_prefix}_{hash(website_raw)}", use_container_width=True):
+        st.session_state[email_toggle_key] = not st.session_state[email_toggle_key]
+    if st.session_state[email_toggle_key]:
 
         # Subject
         subj_key  = f"subj_{key_prefix}_{hash(website_raw)}"
@@ -595,8 +607,8 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
 
         # ── Copy full email preview ──
         full_preview = body + ("\n\n" + sig if sig else "")
-        with st.expander("📋 Preview & copy full email"):
-            st.code(full_preview, language=None)
+        st.markdown("**📋 Full email preview:**")
+        st.code(full_preview, language=None)
 
         # Follow-up email (if already sent)
         if sent:
@@ -637,8 +649,8 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
             fu_full = fu_body + ("\n\n" + sig if sig else "")
 
             # Full follow-up preview
-            with st.expander("📋 Preview & copy follow-up email"):
-                st.code(fu_full, language=None)
+            st.markdown("**📋 Follow-up preview:**")
+            st.code(fu_full, language=None)
 
             if email_raw:
                 fu_mailto = ("mailto:" + email_raw
@@ -651,13 +663,19 @@ def result_card(r: dict, idx: int, key_prefix: str = "all"):
                     st.success("Follow-up marked as done!")
                     st.rerun()
 
-    # ── Report Issue ──
+    # ── Report Issue toggle ──
     report_options = [
         "a. Incorrect details — website or contact info is wrong",
         "b. LinkedIn profile is not correct / couldn't be verified",
         "c. Wrong industry — this company is irrelevant (remove permanently)",
     ]
-    with st.expander(f"🚩 Report an Issue · {company_name_raw}"):
+    report_toggle_key = f"show_report_{key_prefix}_{hash(website_raw)}"
+    if report_toggle_key not in st.session_state:
+        st.session_state[report_toggle_key] = False
+    report_btn_label = f"{'▼' if st.session_state[report_toggle_key] else '▶'} 🚩 Report an Issue · {company_name_raw}"
+    if st.button(report_btn_label, key=f"toggle_report_btn_{key_prefix}_{hash(website_raw)}", use_container_width=True):
+        st.session_state[report_toggle_key] = not st.session_state[report_toggle_key]
+    if st.session_state[report_toggle_key]:
         st.markdown("Help improve search quality by flagging a problem with this result:")
         chosen = st.radio("Issue type:", report_options,
                           key=f"report_radio_{key_prefix}_{hash(website_raw)}",

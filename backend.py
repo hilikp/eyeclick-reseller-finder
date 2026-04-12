@@ -468,7 +468,7 @@ Return JSON with key "companies" → array:
                          "Short paraphrased evidence point 2"],
   "contact_role"      : "CEO / Owner / VP Sales / Managing Director — most senior only",
   "email_subject"     : "Specific, compelling subject line",
-  "email_body"        : "150-200 word personalised outreach. Open with something specific about their business. Do NOT include sign-off or signature."
+  "email_body"        : "150-200 word personalised outreach. Open with something specific about their business. Do NOT include sign-off or signature. Use plain hyphens (-) instead of em dashes (—). No em dashes anywhere."
 }}
 
 Include all real companies with fit_score >= 5. Return valid JSON only."""
@@ -825,7 +825,8 @@ def generate_followup_email(client, company: dict, contact: dict, original_subje
         f"Write a short (80-120 word), friendly follow-up email for someone who has not replied "
         f"to the first outreach. Reference that it is a follow-up. Be specific to their business. "
         f"Ask for a 15-minute call. Do NOT include any sign-off, greeting opener beyond 'Hi {first_name},' "
-        f"or signature — just the body text starting with 'Hi {first_name},'.\n"
+        f"or signature — just the body text starting with 'Hi {first_name},'. "
+        f"Use plain hyphens (-) instead of em dashes (—). No em dashes anywhere.\n"
         f"Return only the email body text, no extra commentary."
     )
     try:
