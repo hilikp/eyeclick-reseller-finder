@@ -15,18 +15,21 @@ from datetime import datetime, timedelta
 class GeminiClient:
     """Drop-in replacement for anthropic.Anthropic() using Google Gemini (free tier)."""
     def __init__(self, api_key: str):
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        self._flash = genai.GenerativeModel("gemini-2.0-flash")
-        self._pro   = genai.GenerativeModel("gemini-2.0-flash")  # use flash for all (free)
+        from google import genai
+        self._client = genai.Client(api_key=api_key)
+        self._model  = "gemini-2.0-flash"
         self.messages = self  # allows client.messages.create(...)
 
     def create(self, model: str, max_tokens: int, messages: list) -> object:
+        from google import genai as _genai
         prompt = "\n".join(m.get("content", "") for m in messages if m.get("role") == "user")
-        gem = self._pro if "sonnet" in model else self._flash
-        resp = gem.generate_content(
-            prompt,
-            generation_config={"max_output_tokens": max_tokens, "temperature": 0.2},
+        resp = self._client.models.generate_content(
+            model=self._model,
+            contents=prompt,
+            config=_genai.types.GenerateContentConfig(
+                max_output_tokens=max_tokens,
+                temperature=0.2,
+            ),
         )
         text = resp.text if hasattr(resp, "text") else ""
         class _C:
