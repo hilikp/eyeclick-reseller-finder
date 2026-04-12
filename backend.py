@@ -17,8 +17,8 @@ class GeminiClient:
     def __init__(self, api_key: str):
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        self._flash = genai.GenerativeModel("gemini-1.5-flash")
-        self._pro   = genai.GenerativeModel("gemini-1.5-flash")  # use flash for all (free)
+        self._flash = genai.GenerativeModel("gemini-2.0-flash")
+        self._pro   = genai.GenerativeModel("gemini-2.0-flash")  # use flash for all (free)
         self.messages = self  # allows client.messages.create(...)
 
     def create(self, model: str, max_tokens: int, messages: list) -> object:
