@@ -4,10 +4,44 @@ backend.py — Shared business logic for app.py and daily_worker.py.
 Zero Streamlit dependency. All API keys passed as explicit parameters.
 """
 
-import re, json, os, time, requests, anthropic, smtplib, ssl, uuid
+import re, json, os, time, requests, smtplib, ssl, uuid
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
+
+# ================================================================
+# LLM CLIENT — Gemini wrapper (drop-in replacement for Anthropic)
+# ================================================================
+class GeminiClient:
+    """Drop-in replacement for anthropic.Anthropic() using Google Gemini (free tier)."""
+    def __init__(self, api_key: str):
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        self._flash = genai.GenerativeModel("gemini-1.5-flash")
+        self._pro   = genai.GenerativeModel("gemini-1.5-flash")  # use flash for all (free)
+        self.messages = self  # allows client.messages.create(...)
+
+    def create(self, model: str, max_tokens: int, messages: list) -> object:
+        prompt = "\n".join(m.get("content", "") for m in messages if m.get("role") == "user")
+        gem = self._pro if "sonnet" in model else self._flash
+        resp = gem.generate_content(
+            prompt,
+            generation_config={"max_output_tokens": max_tokens, "temperature": 0.2},
+        )
+        text = resp.text if hasattr(resp, "text") else ""
+        class _C:
+            def __init__(self, t): self.text = t
+        class _R:
+            def __init__(self, t): self.content = [_C(t)]
+        return _R(text)
+
+
+def make_llm_client(gemini_api_key: str = "", anthropic_api_key: str = ""):
+    """Return a GeminiClient if key provided, else fall back to Anthropic."""
+    if gemini_api_key:
+        return GeminiClient(gemini_api_key)
+    import anthropic
+    return anthropic.Anthropic(api_key=anthropic_api_key)
 
 # ── File paths (relative to CWD — both app.py and daily_worker.py chdir first) ──
 SENT_LOG_FILE       = "sent_log.json"
@@ -488,7 +522,11 @@ Include all real companies with fit_score >= 5. Return valid JSON only."""
             if isinstance(v, list):
                 return v
         return []
-    except Exception:
+    except Exception as e:
+        import sys
+        print(f"[analyse_companies ERROR] {type(e).__name__}: {e}", file=sys.stderr)
+        if raw:
+            print(f"[analyse_companies RAW] {raw[:300]}", file=sys.stderr)
         try:
             m = re.search(r'\{.*\}', raw, re.DOTALL)
             if m:

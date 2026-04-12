@@ -6,7 +6,7 @@ Features: Search · Contact Enrichment · Website Links · Email Editor
 Run with:  streamlit run app.py
 """
 
-import re, json, time, io, requests, anthropic, os, base64, uuid
+import re, json, time, io, requests, os, base64, uuid
 import html as html_lib
 import urllib.parse
 import backend
@@ -39,7 +39,8 @@ def _logo_img_tag(dark_bg: bool = True) -> str:
 # 🔑  API KEYS
 # ================================================================
 APP_PASSWORD      = st.secrets["APP_PASSWORD"]
-ANTHROPIC_API_KEY = st.secrets["ANTHROPIC_API_KEY"]
+ANTHROPIC_API_KEY = st.secrets.get("ANTHROPIC_API_KEY", "")
+GEMINI_API_KEY    = st.secrets.get("GEMINI_API_KEY", "")
 SERPER_API_KEY    = st.secrets["SERPER_API_KEY"]
 HUNTER_API_KEY    = st.secrets.get("HUNTER_API_KEY", "")
 GMAIL_USER         = st.secrets.get("GMAIL_USER", "")
@@ -382,11 +383,14 @@ def get_blocked_territories() -> list:
     return base + extra
 
 # ================================================================
-# ANTHROPIC CLIENT
+# LLM CLIENT (Gemini preferred, falls back to Anthropic)
 # ================================================================
 @st.cache_resource
 def get_anthropic_client():
-    return anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    return backend.make_llm_client(
+        gemini_api_key=GEMINI_API_KEY,
+        anthropic_api_key=ANTHROPIC_API_KEY,
+    )
 
 # ================================================================
 # EXCEL EXPORT

@@ -12,7 +12,7 @@ Setup:
   3. Test: schtasks /run /tn "EyeClickDailyOutreach"
 """
 
-import os, sys, pathlib, tomllib, uuid, time, itertools, anthropic
+import os, sys, pathlib, tomllib, uuid, time, itertools
 from datetime import datetime
 
 # ── Always run from the project directory so relative file paths work ──
@@ -24,7 +24,7 @@ from backend import (
     is_recently_seen, is_flagged_wrong_industry, is_blocked, already_sent,
     get_due_followups, generate_followup_email,
     add_to_queue, load_queue, add_to_seen_log, append_sent_log, mark_followup_done,
-    send_gmail,
+    send_gmail, make_llm_client,
     QUERY_TEMPLATES, REGIONS, DEFAULT_BLOCKED,
 )
 
@@ -57,14 +57,19 @@ def run():
     log("=== EyeClick Daily Worker starting ===")
     secrets = load_secrets()
 
-    required = ["ANTHROPIC_API_KEY", "SERPER_API_KEY",
-                "GMAIL_USER", "GMAIL_APP_PASSWORD"]
+    required = ["SERPER_API_KEY", "GMAIL_USER", "GMAIL_APP_PASSWORD"]
     for key in required:
         if not secrets.get(key):
             log(f"ERROR: Missing secret: {key}")
             sys.exit(1)
+    if not secrets.get("GEMINI_API_KEY") and not secrets.get("ANTHROPIC_API_KEY"):
+        log("ERROR: Need either GEMINI_API_KEY or ANTHROPIC_API_KEY")
+        sys.exit(1)
 
-    client     = anthropic.Anthropic(api_key=secrets["ANTHROPIC_API_KEY"])
+    client     = make_llm_client(
+        gemini_api_key    = secrets.get("GEMINI_API_KEY", ""),
+        anthropic_api_key = secrets.get("ANTHROPIC_API_KEY", ""),
+    )
     region_kw  = REGIONS.get(REGION_LABEL, "")
     blocked    = list(DEFAULT_BLOCKED)
     email_keys = {
