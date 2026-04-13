@@ -511,35 +511,45 @@ Return JSON with key "companies" → array:
 Include all real companies with fit_score >= 5. Return valid JSON only."""
 
     raw = ""
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw  = resp.content[0].text.strip()
-        data = json.loads(raw)
-        if isinstance(data, list):
-            return data
-        for v in data.values():
-            if isinstance(v, list):
-                return v
-        return []
-    except Exception as e:
-        import sys
-        print(f"[analyse_companies ERROR] {type(e).__name__}: {e}", file=sys.stderr)
-        if raw:
-            print(f"[analyse_companies RAW] {raw[:300]}", file=sys.stderr)
+    for attempt in range(4):  # up to 4 attempts with backoff
         try:
-            m = re.search(r'\{.*\}', raw, re.DOTALL)
-            if m:
-                data = json.loads(m.group())
-                for v in data.values():
-                    if isinstance(v, list):
-                        return v
-        except Exception:
-            pass
-        return []
+            resp = client.messages.create(
+                model="claude-sonnet-4-5-20250929",
+                max_tokens=4096,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw  = resp.content[0].text.strip()
+            data = json.loads(raw)
+            if isinstance(data, list):
+                return data
+            for v in data.values():
+                if isinstance(v, list):
+                    return v
+            return []
+        except Exception as e:
+            import sys
+            err_str = str(e)
+            is_overloaded = "529" in err_str or "overloaded" in err_str.lower()
+            is_rate_limit = "429" in err_str or "rate" in err_str.lower()
+            if (is_overloaded or is_rate_limit) and attempt < 3:
+                wait = [15, 30, 60][attempt]
+                print(f"[analyse_companies] API busy (attempt {attempt+1}/4) — retrying in {wait}s…", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            print(f"[analyse_companies ERROR] {type(e).__name__}: {e}", file=sys.stderr)
+            if raw:
+                print(f"[analyse_companies RAW] {raw[:300]}", file=sys.stderr)
+            try:
+                m = re.search(r'\{.*\}', raw, re.DOTALL)
+                if m:
+                    data = json.loads(m.group())
+                    for v in data.values():
+                        if isinstance(v, list):
+                            return v
+            except Exception:
+                pass
+            return []
+    return []
 
 # ================================================================
 # EMAIL FINDER — shared title scoring used by all providers
@@ -796,27 +806,34 @@ def linkedin_search(client, company_name: str, serper_api_key: str) -> dict:
     unverified_flag = len(verified) == 0
     use_results     = verified if verified else results
 
-    try:
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001", max_tokens=300,
-            messages=[{"role": "user", "content":
-                f'From these LinkedIn search results, find the most senior person who actually '
-                f'WORKS AT "{company_name}". If no result clearly shows someone at that company, '
-                f'set works_at_company to false.\n'
-                f'{json.dumps(use_results)}\n'
-                'Return JSON only (no markdown): '
-                '{{"name":"","title":"","linkedin":"https://linkedin.com/in/...","works_at_company":true}}'}],
-        )
-        m = re.search(r'\{.*?\}', resp.content[0].text, re.DOTALL)
-        if not m:
+    for attempt in range(3):
+        try:
+            resp = client.messages.create(
+                model="claude-haiku-4-5-20251001", max_tokens=300,
+                messages=[{"role": "user", "content":
+                    f'From these LinkedIn search results, find the most senior person who actually '
+                    f'WORKS AT "{company_name}". If no result clearly shows someone at that company, '
+                    f'set works_at_company to false.\n'
+                    f'{json.dumps(use_results)}\n'
+                    'Return JSON only (no markdown): '
+                    '{{"name":"","title":"","linkedin":"https://linkedin.com/in/...","works_at_company":true}}'}],
+            )
+            m = re.search(r'\{.*?\}', resp.content[0].text, re.DOTALL)
+            if not m:
+                return {}
+            data = json.loads(m.group())
+            if not data.get("works_at_company", True):
+                return {}
+            data["linkedin_unverified"] = unverified_flag
+            return data
+        except Exception as e:
+            err_str = str(e)
+            if ("529" in err_str or "overloaded" in err_str.lower() or
+                "429" in err_str) and attempt < 2:
+                time.sleep([15, 30][attempt])
+                continue
             return {}
-        data = json.loads(m.group())
-        if not data.get("works_at_company", True):
-            return {}
-        data["linkedin_unverified"] = unverified_flag
-        return data
-    except Exception:
-        return {}
+    return {}
 
 # ================================================================
 # ENRICH CONTACT
