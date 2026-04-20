@@ -41,6 +41,10 @@ def _logo_img_tag(dark_bg: bool = True) -> str:
 APP_PASSWORD      = st.secrets["APP_PASSWORD"]
 ANTHROPIC_API_KEY = st.secrets.get("ANTHROPIC_API_KEY", "")
 GEMINI_API_KEY    = st.secrets.get("GEMINI_API_KEY", "")
+
+# Auth token stored in URL so session survives tab switches and reconnects
+import hashlib as _hashlib
+_AUTH_TOKEN = _hashlib.sha256(APP_PASSWORD.encode()).hexdigest()[:20]
 SERPER_API_KEY    = st.secrets["SERPER_API_KEY"]
 HUNTER_API_KEY    = st.secrets.get("HUNTER_API_KEY", "")
 GMAIL_USER         = st.secrets.get("GMAIL_USER", "")
@@ -236,9 +240,14 @@ def login_page():
         if st.button("Sign In", use_container_width=True):
             if pwd == APP_PASSWORD:
                 st.session_state["authenticated"] = True
+                st.query_params["auth"] = _AUTH_TOKEN
                 st.rerun()
             else:
                 st.error("Incorrect password. Please try again.")
+
+# Restore auth from URL token (survives tab switches and WebSocket reconnects)
+if st.query_params.get("auth") == _AUTH_TOKEN:
+    st.session_state["authenticated"] = True
 
 if not st.session_state.get("authenticated"):
     login_page()
@@ -331,6 +340,7 @@ with st.sidebar:
     st.markdown("---")
     if st.sidebar.button("🔓 Sign Out"):
         st.session_state["authenticated"] = False
+        st.query_params.clear()
         st.rerun()
     st.markdown("*EyeClick Reseller Finder v3.0*")
 
