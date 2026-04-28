@@ -2,11 +2,17 @@
 """
 daily_worker.py — GitHub Actions daily automation (runs at 06:00 UTC).
 Finds prospects, enriches contacts, saves to daily_runs/YYYY-MM-DD.json.
-All API keys from environment variables (no Streamlit dependency).
 
-Run locally:
-  export SERPER_API_KEY=... GEMINI_API_KEY=... (etc)
-  python daily_worker.py
+Run in GitHub Actions:
+  API keys passed via repo secrets as environment variables.
+
+Run locally (for testing):
+  Option 1: Set env vars:
+    export SERPER_API_KEY=... GEMINI_API_KEY=... (etc)
+    python daily_worker.py
+
+  Option 2: Uses .streamlit/secrets.toml as fallback:
+    API keys read from env vars first, fall back to secrets.toml if not found.
 """
 
 import os, sys, pathlib, json, time, itertools
@@ -25,6 +31,36 @@ def log(msg: str):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{ts}] {msg}", flush=True)
 
+def load_secrets_from_toml() -> dict:
+    """Load secrets from .streamlit/secrets.toml for local testing fallback."""
+    try:
+        import tomllib
+    except ImportError:
+        import tomli as tomllib  # Python < 3.11
+
+    secrets_path = pathlib.Path(".streamlit/secrets.toml")
+    if not secrets_path.exists():
+        return {}
+
+    try:
+        with open(secrets_path, "rb") as f:
+            return tomllib.load(f)
+    except Exception as e:
+        log(f"WARNING: Could not load secrets.toml: {e}")
+        return {}
+
+def get_secret(key: str, fallback: str = "") -> str:
+    """Get a secret from environment variables, fall back to secrets.toml for local testing."""
+    env_value = os.getenv(key)
+    if env_value:
+        return env_value
+
+    # Fallback to secrets.toml for local testing
+    if not hasattr(get_secret, "_secrets_cache"):
+        get_secret._secrets_cache = load_secrets_from_toml()
+
+    return get_secret._secrets_cache.get(key, fallback)
+
 def run():
     log("=== EyeClick Daily Worker starting ===")
 
@@ -32,17 +68,17 @@ def run():
     region_label = os.getenv("REGION", "🌍  Worldwide")
     region_kw = ""
 
-    serper_api_key     = os.getenv("SERPER_API_KEY", "")
-    gemini_api_key     = os.getenv("GEMINI_API_KEY", "")
-    anthropic_api_key  = os.getenv("ANTHROPIC_API_KEY", "")
-    hunter_api_key     = os.getenv("HUNTER_API_KEY", "")
-    apollo_api_key     = os.getenv("APOLLO_API_KEY", "")
-    snov_client_id     = os.getenv("SNOV_CLIENT_ID", "")
-    snov_client_secret = os.getenv("SNOV_CLIENT_SECRET", "")
-    prospeo_api_key    = os.getenv("PROSPEO_API_KEY", "")
+    serper_api_key     = get_secret("SERPER_API_KEY")
+    gemini_api_key     = get_secret("GEMINI_API_KEY")
+    anthropic_api_key  = get_secret("ANTHROPIC_API_KEY")
+    hunter_api_key     = get_secret("HUNTER_API_KEY")
+    apollo_api_key     = get_secret("APOLLO_API_KEY")
+    snov_client_id     = get_secret("SNOV_CLIENT_ID")
+    snov_client_secret = get_secret("SNOV_CLIENT_SECRET")
+    prospeo_api_key    = get_secret("PROSPEO_API_KEY")
 
     if not serper_api_key:
-        log("ERROR: SERPER_API_KEY not set")
+        log("ERROR: SERPER_API_KEY not set (env var or secrets.toml)")
         return False
 
     if not gemini_api_key and not anthropic_api_key:

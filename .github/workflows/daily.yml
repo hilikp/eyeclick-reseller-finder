@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests google-genai anthropic
+          pip install -r requirements.txt
 
       - name: Run daily worker
         env:
@@ -32,11 +32,13 @@ jobs:
           SNOV_CLIENT_ID: ${{ secrets.SNOV_CLIENT_ID }}
           SNOV_CLIENT_SECRET: ${{ secrets.SNOV_CLIENT_SECRET }}
           PROSPEO_API_KEY: ${{ secrets.PROSPEO_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           NUM_RESULTS: 10
           REGION: "🌍  Worldwide"
         run: python daily_worker.py
 
-      - name: Upload results
+      - name: Upload daily run results
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -44,11 +46,11 @@ jobs:
           path: daily_runs/
           retention-days: 90
 
-      - name: Commit and push daily results
-        if: success()
+      - name: Persist state files (seen companies, outreach queue, sent log)
+        if: always()
         run: |
           git config user.name "EyeClick Bot"
           git config user.email "bot@eyeclick.local"
-          git add daily_runs/
-          git commit -m "Daily run: $(date +%Y-%m-%d)" || true
+          git add -A seen_companies.json outreach_queue.json sent_log.json daily_runs/ 2>/dev/null || true
+          git commit -m "Daily run: $(date -u +%Y-%m-%d)" --allow-empty || true
           git push
