@@ -49,6 +49,13 @@ jobs:
       - name: Persist state files (seen companies, outreach queue, sent log)
         if: always()
         run: |
+          echo "=== DEBUG: All JSON files modified during this run ==="
+          find . -name "*.json" -newer requirements.txt 2>/dev/null || echo "(no files found newer than requirements.txt)"
+          echo "=== DEBUG: Contents of daily_runs/ directory ==="
+          ls -la daily_runs/ 2>/dev/null || echo "(daily_runs/ directory does not exist)"
+          echo "=== DEBUG: git status ==="
+          git status
+          echo "=== Committing files ==="
           git config user.name "EyeClick Bot"
           git config user.email "bot@eyeclick.local"
           git add seen_companies.json outreach_queue.json sent_log.json daily_runs/ 2>/dev/null || true

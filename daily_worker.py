@@ -61,6 +61,44 @@ def get_secret(key: str, fallback: str = "") -> str:
 
     return get_secret._secrets_cache.get(key, fallback)
 
+def write_daily_run(final: list, prefix: str = "") -> str:
+    """Write final list to daily_runs/YYYY-MM-DD.json with debug logging.
+    Returns the path of the file written, or empty string on failure."""
+    today = datetime.now().strftime("%Y-%m-%d")
+    output_file = f"daily_runs/{today}.json"
+    cwd = os.getcwd()
+
+    log(f"{prefix}DEBUG: Current working directory: {cwd}")
+    log(f"{prefix}DEBUG: Number of companies in final list: {len(final)}")
+    log(f"{prefix}DEBUG: About to call os.makedirs('daily_runs', exist_ok=True)")
+
+    try:
+        os.makedirs("daily_runs", exist_ok=True)
+        log(f"{prefix}DEBUG: ✓ os.makedirs completed")
+        log(f"{prefix}DEBUG: daily_runs/ exists: {os.path.isdir('daily_runs')}")
+    except Exception as e:
+        log(f"{prefix}ERROR: os.makedirs failed: {type(e).__name__}: {e}")
+        return ""
+
+    log(f"{prefix}DEBUG: About to write to: {os.path.abspath(output_file)}")
+
+    try:
+        with open(output_file, "w") as f:
+            json.dump(final, f, indent=2)
+        log(f"{prefix}DEBUG: ✓ json.dump completed")
+
+        # Verify the file actually exists and has content
+        if os.path.exists(output_file):
+            size = os.path.getsize(output_file)
+            log(f"{prefix}DEBUG: ✓ File exists at {os.path.abspath(output_file)} ({size} bytes)")
+        else:
+            log(f"{prefix}ERROR: File does not exist after write!")
+            return ""
+        return output_file
+    except Exception as e:
+        log(f"{prefix}ERROR: json.dump failed: {type(e).__name__}: {e}")
+        return ""
+
 def run():
     log("=== EyeClick Daily Worker starting ===")
 
@@ -144,18 +182,35 @@ def run():
         company["website_ok"] = validate_website(company.get("website",""))
         time.sleep(0.6)
 
-    os.makedirs("daily_runs", exist_ok=True)
-    today = datetime.now().strftime("%Y-%m-%d")
-    output_file = f"daily_runs/{today}.json"
-
-    with open(output_file, "w") as f:
-        json.dump(final, f, indent=2)
-
-    log(f"✅ Done! {len(final)} prospects saved to {output_file}")
+    log("=== Phase 3: Writing daily_runs JSON file ===")
+    output_file = write_daily_run(final, prefix="[main] ")
+    if output_file:
+        log(f"✅ Done! {len(final)} prospects saved to {output_file}")
+    else:
+        log(f"⚠ Main write failed — guaranteed write below will retry")
     add_to_seen_log(final)
 
     return True
 
 if __name__ == "__main__":
-    success = run()
+    # Wrap in try/except + guaranteed write so we ALWAYS produce a daily_runs file
+    final_companies = []
+    success = False
+    try:
+        success = run()
+    except Exception as e:
+        log(f"FATAL ERROR in run(): {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+
+    # GUARANTEED WRITE — even if run() crashed or returned no companies
+    log("=== Guaranteed write at script end ===")
+    today = datetime.now().strftime("%Y-%m-%d")
+    output_file = f"daily_runs/{today}.json"
+    if not os.path.exists(output_file):
+        log(f"[guaranteed] No file at {output_file} — writing empty list as marker")
+        write_daily_run(final_companies, prefix="[guaranteed] ")
+    else:
+        log(f"[guaranteed] File already exists at {output_file} — skipping")
+
     sys.exit(0 if success else 1)
