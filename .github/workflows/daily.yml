@@ -58,6 +58,6 @@ jobs:
           echo "=== Committing files ==="
           git config user.name "EyeClick Bot"
           git config user.email "bot@eyeclick.local"
-          git add seen_companies.json outreach_queue.json sent_log.json daily_runs/ 2>/dev/null || true
+          git add seen_companies.json outreach_queue.json sent_log.json daily_runs/*.json 2>/dev/null || true
           git commit -m "Daily run: $(date -u +%Y-%m-%d)" --allow-empty || true
           git push
