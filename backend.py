@@ -835,6 +835,18 @@ def linkedin_search(client, company_name: str, serper_api_key: str) -> dict:
             return {}
     return {}
 
+def _is_senior_title(title: str) -> bool:
+    """Check if a title represents a decision-maker / senior person."""
+    if not title:
+        return False
+    senior_keywords = [
+        "owner", "co-founder", "founder", "ceo", "chief executive",
+        "president", "managing director", "managing partner",
+        "vp", "vice president",
+    ]
+    title_lower = title.lower()
+    return any(kw in title_lower for kw in senior_keywords)
+
 # ================================================================
 # ENRICH CONTACT
 # ================================================================
@@ -842,7 +854,10 @@ def enrich_contact(client, company: dict, serper_api_key: str,
                    email_keys) -> dict:
     """email_keys may be a plain hunter_api_key string (legacy) or a dict with
     hunter_api_key / apollo_api_key / snov_client_id / snov_client_secret /
-    prospeo_api_key keys."""
+    prospeo_api_key keys.
+
+    Always calls linkedin_search() to find a senior person's LinkedIn profile.
+    Email comes from email finders, but LinkedIn always points to a decision-maker."""
     contact = {"name":"","title":"","email":"","confidence":"","linkedin":"","linkedin_unverified":False}
     # Normalise legacy callers that pass a plain string
     if isinstance(email_keys, str):
@@ -856,15 +871,18 @@ def enrich_contact(client, company: dict, serper_api_key: str,
                         "confidence": f"{h.get('confidence',0)}%" if h.get("confidence") else "",
                         "linkedin"  : h.get("linkedin",""),
                         "email_source": h.get("source","")})
-    if not contact["name"] or not contact["linkedin"]:
-        li = linkedin_search(client, company.get("company_name",""), serper_api_key)
-        if li:
-            if not contact["name"]:
-                contact["name"]  = li.get("name","")
-                contact["title"] = li.get("title","")
-            if not contact["linkedin"]:
-                contact["linkedin"]            = li.get("linkedin","")
-                contact["linkedin_unverified"] = li.get("linkedin_unverified", False)
+
+    li = linkedin_search(client, company.get("company_name",""), serper_api_key)
+    if li and li.get("linkedin"):
+        li_title = li.get("title","")
+        if _is_senior_title(li_title):
+            contact["linkedin"]            = li.get("linkedin","")
+            contact["linkedin_unverified"] = li.get("linkedin_unverified", False)
+
+    if not contact["name"] and li:
+        contact["name"]  = li.get("name","")
+        contact["title"] = li.get("title","")
+
     return contact
 
 # ================================================================

@@ -1,0 +1,56 @@
+name: Daily Prospecting Run
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # 06:00 UTC daily
+  workflow_dispatch:    # Allow manual trigger from GitHub UI
+
+jobs:
+  daily-worker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run daily worker
+        env:
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HUNTER_API_KEY: ${{ secrets.HUNTER_API_KEY }}
+          APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+          SNOV_CLIENT_ID: ${{ secrets.SNOV_CLIENT_ID }}
+          SNOV_CLIENT_SECRET: ${{ secrets.SNOV_CLIENT_SECRET }}
+          PROSPEO_API_KEY: ${{ secrets.PROSPEO_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NUM_RESULTS: 10
+          REGION: "🌍  Worldwide"
+        run: python daily_worker.py
+
+      - name: Upload daily run results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-run-results
+          path: daily_runs/
+          retention-days: 90
+
+      - name: Persist state files (seen companies, outreach queue, sent log)
+        if: always()
+        run: |
+          git config user.name "EyeClick Bot"
+          git config user.email "bot@eyeclick.local"
+          git add -A seen_companies.json outreach_queue.json sent_log.json daily_runs/ 2>/dev/null || true
+          git commit -m "Daily run: $(date -u +%Y-%m-%d)" --allow-empty || true
+          git push

@@ -245,6 +245,20 @@ def login_page():
             else:
                 st.error("Incorrect password. Please try again.")
 
+def _load_latest_daily_run():
+    """Load the most recent daily_runs/*.json file if it exists."""
+    import glob
+    daily_files = sorted(glob.glob("daily_runs/*.json"), reverse=True)
+    if daily_files:
+        try:
+            with open(daily_files[0]) as f:
+                results = json.load(f)
+                date_str = daily_files[0].replace("daily_runs/", "").replace(".json", "")
+                return results, date_str
+        except Exception:
+            pass
+    return None, None
+
 # Restore auth from URL token (survives tab switches and WebSocket reconnects)
 if st.query_params.get("auth") == _AUTH_TOKEN:
     st.session_state["authenticated"] = True
@@ -252,6 +266,15 @@ if st.query_params.get("auth") == _AUTH_TOKEN:
 if not st.session_state.get("authenticated"):
     login_page()
     st.stop()
+
+# Auto-load daily run results on first login (if no manual search yet)
+if "last_results" not in st.session_state:
+    daily_results, daily_date = _load_latest_daily_run()
+    if daily_results:
+        st.session_state["last_results"] = daily_results
+        st.session_state["last_date"] = daily_date
+        st.session_state["last_region"] = "🌍  Worldwide"
+        st.session_state["daily_batch_date"] = daily_date
 
 # ================================================================
 # SIDEBAR
@@ -981,6 +1004,7 @@ if search_clicked:
     st.session_state["last_results"] = final
     st.session_state["last_date"]    = today
     st.session_state["last_region"]  = region_label
+    st.session_state["daily_batch_date"] = None  # Clear daily batch indicator on manual search
 
 # ================================================================
 # DISPLAY RESULTS (from session state — survives reruns)
@@ -989,8 +1013,14 @@ final = st.session_state.get("last_results")
 if final:
     today        = st.session_state.get("last_date", datetime.now().strftime("%Y-%m-%d"))
     region_label = st.session_state.get("last_region","")
+    daily_batch_date = st.session_state.get("daily_batch_date")
 
-    st.markdown(f"## Results · {region_label.strip()} · {today}")
+    if daily_batch_date:
+        results_header = f"## 🌅 Today's morning batch · {daily_batch_date}"
+    else:
+        results_header = f"## Results · {region_label.strip()} · {today}"
+
+    st.markdown(results_header)
 
     # Stats bar
     groups = {"Seniors":[], "Education":[], "Entertainment":[]}
