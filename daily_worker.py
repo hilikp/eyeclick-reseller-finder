@@ -15,7 +15,7 @@ Run locally (for testing):
     API keys read from env vars first, fall back to secrets.toml if not found.
 """
 
-import os, sys, pathlib, json, time, itertools
+import os, sys, pathlib, tomllib, uuid, time, itertools, subprocess, json
 from datetime import datetime
 
 os.chdir(pathlib.Path(__file__).parent)
@@ -60,6 +60,82 @@ def get_secret(key: str, fallback: str = "") -> str:
         get_secret._secrets_cache = load_secrets_from_toml()
 
     return get_secret._secrets_cache.get(key, fallback)
+
+def git_push():
+    """Push daily run results to GitHub."""
+    work_dir = str(pathlib.Path(__file__).parent)
+
+    # git add
+    log("Running: git add daily_runs/ seen_companies.json outreach_queue.json sent_log.json")
+    result = subprocess.run(
+        ["git", "add", "daily_runs/", "seen_companies.json", "outreach_queue.json", "sent_log.json"],
+        cwd=work_dir,
+        capture_output=True,
+        text=True
+    )
+    if result.returncode == 0:
+        log("✓ git add completed")
+    else:
+        log(f"✗ git add failed: {result.stderr}")
+        return False
+
+    # git commit
+    today = datetime.now().strftime("%Y-%m-%d")
+    log(f"Running: git commit -m \"Daily run: {today}\"")
+    result = subprocess.run(
+        ["git", "commit", "-m", f"Daily run: {today}"],
+        cwd=work_dir,
+        capture_output=True,
+        text=True
+    )
+    if result.returncode == 0:
+        # Extract commit hash from output (looks like "[branch hash] message")
+        output = result.stdout.strip()
+        if output:
+            commit_info = output.split(']')[0].replace('[', '').strip()
+            log(f"✓ git commit succeeded ({commit_info})")
+        else:
+            log("✓ git commit succeeded")
+    elif "nothing to commit" in result.stdout or "nothing to commit" in result.stderr:
+        log("ℹ git commit: nothing to commit (no changes)")
+    else:
+        log(f"✗ git commit failed: {result.stderr}")
+        return False
+
+    # git push
+    log("Running: git push origin main")
+    result = subprocess.run(
+        ["git", "push", "origin", "main"],
+        cwd=work_dir,
+        capture_output=True,
+        text=True
+    )
+    if result.returncode == 0:
+        log("✓ git push succeeded")
+        return True
+    else:
+        log(f"✗ git push failed: {result.stderr}")
+        return False
+
+def save_daily_run(initial_count: int, followup_count: int):
+    """Save daily run summary to daily_runs/YYYY-MM-DD.json"""
+    daily_runs_dir = pathlib.Path(__file__).parent / "daily_runs"
+    daily_runs_dir.mkdir(exist_ok=True)
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    run_file = daily_runs_dir / f"{today}.json"
+
+    run_data = {
+        "date": today,
+        "timestamp": datetime.now().isoformat(),
+        "initial_companies": initial_count,
+        "followup_emails": followup_count,
+    }
+
+    with open(run_file, "w") as f:
+        json.dump(run_data, f, indent=2)
+
+    log(f"✓ Daily run saved to {run_file}")
 
 def run():
     log("=== EyeClick Daily Worker starting ===")
@@ -155,6 +231,14 @@ def run():
     add_to_seen_log(final)
 
     return True
+
+    # ── Phase 6: Save daily run and push to GitHub ─────────────────────────
+    log("Phase 6: Saving daily run and pushing to GitHub…")
+    save_daily_run(initial_count, followup_count)
+    if git_push():
+        log("✓ Successfully pushed to GitHub")
+    else:
+        log("⚠ Failed to push to GitHub — check logs above")
 
 if __name__ == "__main__":
     success = run()
