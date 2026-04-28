@@ -1,18 +1,53 @@
 #!/usr/bin/env python3
 """
-daily_worker.py — GitHub Actions daily automation (runs at 06:00 UTC).
-Finds prospects, enriches contacts, saves to daily_runs/YYYY-MM-DD.json.
+daily_worker.py — Daily prospecting automation via Windows Task Scheduler.
+Finds prospects, enriches contacts, saves to daily_runs/YYYY-MM-DD.json,
+then commits and pushes state files to GitHub automatically.
 
-Run in GitHub Actions:
-  API keys passed via repo secrets as environment variables.
+══════════════════════════════════════════════════════
+WINDOWS TASK SCHEDULER SETUP
+══════════════════════════════════════════════════════
 
-Run locally (for testing):
-  Option 1: Set env vars:
-    export SERPER_API_KEY=... GEMINI_API_KEY=... (etc)
-    python daily_worker.py
+GUI method:
+  1. Open Task Scheduler  (Start → search "Task Scheduler")
+  2. Action → Create Basic Task
+  3. Name:     EyeClick Daily Worker
+  4. Trigger:  Daily  at 08:00 (or preferred time)
+  5. Action:   Start a program
+       Program/script : python
+       Arguments      : C:\\path\\to\\eyeclick-reseller-finder\\daily_worker.py >> C:\\path\\to\\eyeclick-reseller-finder\\worker_log.txt 2>&1
+       Start in       : C:\\path\\to\\eyeclick-reseller-finder
+  6. Finish → check "Open properties dialog" → tick "Run whether user is logged on or not"
 
-  Option 2: Uses .streamlit/secrets.toml as fallback:
-    API keys read from env vars first, fall back to secrets.toml if not found.
+Command-line method (run once as Administrator):
+  schtasks /create /tn "EyeClickDailyWorker" /sc daily /st 08:00 /f ^
+    /tr "cmd /c python C:\\path\\to\\eyeclick-reseller-finder\\daily_worker.py >> C:\\path\\to\\eyeclick-reseller-finder\\worker_log.txt 2>&1"
+
+Test run (no scheduling):
+  cd C:\\path\\to\\eyeclick-reseller-finder
+  python daily_worker.py
+
+══════════════════════════════════════════════════════
+SECRETS
+══════════════════════════════════════════════════════
+API keys are read from .streamlit/secrets.toml in the project folder.
+Required keys:
+  SERPER_API_KEY, GEMINI_API_KEY (or ANTHROPIC_API_KEY),
+  HUNTER_API_KEY, APOLLO_API_KEY, SNOV_CLIENT_ID, SNOV_CLIENT_SECRET,
+  PROSPEO_API_KEY
+
+══════════════════════════════════════════════════════
+GIT PUSH
+══════════════════════════════════════════════════════
+After each run the script commits and pushes:
+  - daily_runs/YYYY-MM-DD.json   (today's prospects)
+  - seen_companies.json          (dedup log)
+  - outreach_queue.json          (pending emails)
+  - sent_log.json                (email history)
+
+Requires git to be installed and the repo already cloned + authenticated
+(e.g. via GitHub Desktop, git credential manager, or SSH key).
+If push fails the results are still saved locally — error is logged only.
 """
 
 import os, sys, pathlib, json, time, itertools
@@ -60,6 +95,43 @@ def get_secret(key: str, fallback: str = "") -> str:
         get_secret._secrets_cache = load_secrets_from_toml()
 
     return get_secret._secrets_cache.get(key, fallback)
+
+def git_push(today: str):
+    """Stage state files, commit, and push to origin main.
+    Logs errors but never raises — a git failure must not crash the worker."""
+    import subprocess
+
+    files_to_add = [
+        f"daily_runs/{today}.json",
+        "seen_companies.json",
+        "outreach_queue.json",
+        "sent_log.json",
+    ]
+
+    def _run(args: list) -> tuple[bool, str]:
+        r = subprocess.run(["git"] + args, capture_output=True, text=True)
+        return r.returncode == 0, (r.stdout + r.stderr).strip()
+
+    log("[git] Staging files…")
+    ok, out = _run(["add"] + files_to_add)
+    if not ok:
+        log(f"[git] WARNING: git add failed: {out}")
+
+    ok, out = _run(["commit", "-m", f"Daily run: {today}"])
+    if not ok:
+        if "nothing to commit" in out.lower():
+            log("[git] Nothing new to commit — files unchanged since last run")
+        else:
+            log(f"[git] WARNING: git commit failed: {out}")
+        return
+
+    log("[git] Pushing to origin main…")
+    ok, out = _run(["push", "origin", "main"])
+    if ok:
+        log("[git] ✅ Push successful")
+    else:
+        log(f"[git] ⚠ Push failed (results saved locally): {out}")
+
 
 def write_daily_run(final: list, prefix: str = "") -> str:
     """Write final list to daily_runs/YYYY-MM-DD.json with debug logging.
@@ -183,12 +255,16 @@ def run():
         time.sleep(0.6)
 
     log("=== Phase 3: Writing daily_runs JSON file ===")
+    today = datetime.now().strftime("%Y-%m-%d")
     output_file = write_daily_run(final, prefix="[main] ")
     if output_file:
         log(f"✅ Done! {len(final)} prospects saved to {output_file}")
     else:
-        log(f"⚠ Main write failed — guaranteed write below will retry")
+        log("⚠ Main write failed — guaranteed write below will retry")
     add_to_seen_log(final)
+
+    log("=== Phase 4: Committing and pushing to GitHub ===")
+    git_push(today)
 
     return True
 
@@ -210,6 +286,7 @@ if __name__ == "__main__":
     if not os.path.exists(output_file):
         log(f"[guaranteed] No file at {output_file} — writing empty list as marker")
         write_daily_run(final_companies, prefix="[guaranteed] ")
+        git_push(today)
     else:
         log(f"[guaranteed] File already exists at {output_file} — skipping")
 
