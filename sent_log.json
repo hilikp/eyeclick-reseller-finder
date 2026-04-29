@@ -1,0 +1,83 @@
+[
+  {
+    "company": "Assisted Living Technologies, Inc.",
+    "website": "https://www.assistedlivingtechnologies.com/",
+    "email": "nicholas@assistedlivingtechnologies.com",
+    "subject": "Add interactive cognitive engagement to your senior tech portfolio",
+    "sent_date": "2026-04-03 13:28",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  },
+  {
+    "company": "Key Way Medical",
+    "website": "https://keywaymedical.com/",
+    "email": "info@keywaymedical.com",
+    "subject": "Complement your mobility solutions with cognitive engagement technology",
+    "sent_date": "2026-04-03 13:28",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  },
+  {
+    "company": "School Specialty",
+    "website": "https://www.schoolspecialty.com",
+    "email": "jaimie.larson@schoolspecialty.com",
+    "subject": "Add interactive floor projection to your special education portfolio",
+    "sent_date": "2026-04-03 13:28",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": true
+  },
+  {
+    "company": "Go Play Systems",
+    "website": "https://www.goplaysystems.com/",
+    "email": "sales@goplaysystems.com",
+    "subject": "Interactive technology upgrade for your commercial playground clients",
+    "sent_date": "2026-04-03 13:28",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  },
+  {
+    "company": "ELI Play",
+    "website": "https://eliplay.com/products/indoor-playgrounds",
+    "email": "stan@eliplay.com",
+    "subject": "High-ROI interactive attraction for your playground installations",
+    "sent_date": "2026-04-03 13:29",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  },
+  {
+    "company": "NinescapeLand",
+    "website": "https://ninescapeland.com/",
+    "email": "sale@ninescapeland.com",
+    "subject": "Interactive floor technology for your trampoline park clients",
+    "sent_date": "2026-04-03 13:29",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  },
+  {
+    "company": "Dreamland Playground",
+    "website": "https://www.dreamlandplayground.com/indoor-playground-equipment",
+    "email": "nora@dreamlandplayground.com",
+    "subject": "Add digital play to your turnkey playground solutions",
+    "sent_date": "2026-04-03 13:29",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  },
+  {
+    "company": "SensoryOne",
+    "website": "https://sensoryone.com/",
+    "email": "alanfine@sensoryone.com",
+    "subject": "Interactive floor projection for your sensory environment clients",
+    "sent_date": "2026-04-03 13:29",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  },
+  {
+    "company": "Experia USA",
+    "website": "https://www.experia-usa.com/",
+    "email": "scott.reding@experia-usa.com",
+    "subject": "Floor-based interactive technology for your dementia care clients",
+    "sent_date": "2026-04-03 13:29",
+    "follow_up_date": "2026-04-05",
+    "follow_up_done": false
+  }
+]
