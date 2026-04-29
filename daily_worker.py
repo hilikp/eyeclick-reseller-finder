@@ -65,17 +65,14 @@ def git_push_today(date_str: str):
     """Push daily run results to GitHub using shell=True (works on Windows)."""
     repo = str(pathlib.Path(__file__).parent)
     commands = [
+        f'cd /d "{repo}" && git pull origin main --rebase',
         f'cd /d "{repo}" && git add daily_runs/*.json seen_companies.json outreach_queue.json sent_log.json',
-        f'cd /d "{repo}" && git commit -m "Daily run: {date_str}" || echo nothing to commit',
+        f'cd /d "{repo}" && git diff --cached --quiet || git commit -m "Daily run: {date_str}"',
         f'cd /d "{repo}" && git push origin main',
     ]
     for cmd in commands:
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        log(f"[git] {cmd[:40]}... → rc={result.returncode}")
-        if result.stdout.strip():
-            log(f"[git stdout] {result.stdout.strip()[:200]}")
-        if result.stderr.strip():
-            log(f"[git stderr] {result.stderr.strip()[:200]}")
+        log(f"[git] rc={result.returncode} {result.stdout.strip()[:100]} {result.stderr.strip()[:100]}")
 
 def run():
     log("=== EyeClick Daily Worker starting ===")
