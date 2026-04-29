@@ -1,49 +1,24 @@
 [
   {
-    "company_name": "Key Way Medical",
-    "website": "https://keywaymedical.com",
+    "company_name": "ElderDepot",
+    "website": "https://www.elderdepot.com/",
     "country": "United States",
     "vertical": "Seniors",
-    "description": "Distributor of assistive mobility aids and home health solutions serving healthcare facilities and senior care providers.",
+    "description": "Distributor of eldercare and assisted living products including technology for seniors, low vision products, hearing impaired devices, dementia care solutions, and assistive equipment for caregivers and facilities.",
     "fit_score": 7,
-    "fit_reason": "Key Way Medical distributes assistive mobility aids and home health solutions, indicating they serve senior care facilities and healthcare providers. Their focus on innovative assistive solutions that enhance quality of life aligns with the therapeutic and engagement focus similar to Fu Kang Healthcare. The medical equipment distribution model suggests B2B sales to facilities rather than direct-to-consumer.",
-    "growth_signals": "None detected",
+    "fit_reason": "ElderDepot supplies technology and assistive products specifically designed for senior care, including dementia care solutions and cognitive support products. They serve both caregivers and facilities, indicating B2B distribution capabilities. Their focus on technology for seniors with cognitive challenges aligns well with EyeClick's value proposition, similar to CDS Boutique's cognitive stimulation product range.",
+    "growth_signals": "None detected.",
     "evidence_snippets": [
-      "Provides innovative assistive mobility aids and home health solutions",
-      "Solutions aim to prolong and enhance life for seniors and recovery patients"
+      "Supplies technology products for seniors including dementia care solutions",
+      "Offers low vision products, assistive technology, and cognitive support devices",
+      "Serves both caregivers and assisted living facilities with eldercare products"
     ],
-    "contact_role": "VP Sales",
-    "email_subject": "Complement your assistive aids with interactive engagement technology",
-    "email_body": "Key Way Medical has built a strong reputation providing innovative assistive solutions that enhance quality of life for seniors and recovery patients.\n\nEyeClick's interactive projection system would be a natural complement to your mobility aids portfolio. It projects games and activities onto floors and walls - requiring no hand-held devices - making it ideal for residents with limited mobility or cognitive decline that your customers already serve.\n\nCare facilities report measurable improvements in social engagement, motor activity, and cognitive stimulation. Many of our resellers position it alongside mobility and therapy equipment as a complete engagement solution.\n\nWith systems ranging $5,000-$30,000+, it gives your sales team a high-value offering that addresses the critical engagement gap in senior care facilities. Would you be interested in discussing an authorized reseller partnership?",
+    "contact_role": "Owner / Managing Director",
+    "email_subject": "Interactive technology for dementia care - no devices required",
+    "email_body": "I see ElderDepot has built a thoughtful selection of technology products for seniors, including specialized solutions for dementia care and cognitive challenges.\n\nEyeClick's interactive projection system fits naturally into your product mix - it projects games and activities directly onto floors and walls, requiring no hand-held devices whatsoever. This makes it especially powerful for residents with limited mobility or cognitive decline who struggle with tablets or controllers.\n\nMemory care units report measurable improvements in social engagement and motor activity. Unlike device-based solutions, EyeClick creates shared group experiences that bring residents together in ways that feel natural and joyful.\n\nWith systems ranging from $5,000-$30,000+, it represents a meaningful revenue opportunity that complements your existing assistive technology offerings. Would you be open to a brief call to explore whether EyeClick could strengthen your portfolio for facility clients?",
     "contact": {
-      "name": "Eric Tsai",
+      "name": "",
       "title": "",
-      "email": "",
-      "confidence": "",
-      "linkedin": "",
-      "linkedin_unverified": false
-    },
-    "website_ok": true
-  },
-  {
-    "company_name": "Kurtz Bros",
-    "website": "https://www.kurtzbros.com/",
-    "country": "United States",
-    "vertical": "Education",
-    "description": "Distributor of teaching materials and special needs classroom supplies for both general education and special education programs.",
-    "fit_score": 6,
-    "fit_reason": "Kurtz Bros distributes teaching materials and special needs supplies to educational institutions, serving both general and special education classrooms. They have an established distribution model similar to the gold examples, though their online presence suggests they may be smaller in scale. Their dual focus on general and special education gives them broad access to K-12 schools.",
-    "growth_signals": "None detected in search results.",
-    "evidence_snippets": [
-      "Wide range of teaching materials for special needs students",
-      "Serves both general education and special education classrooms with supplies and equipment"
-    ],
-    "contact_role": "Owner",
-    "email_subject": "Add interactive floor technology to your special needs catalog",
-    "email_body": "I see Kurtz Bros serves both general and special education classrooms with teaching materials and supplies - giving you unique access across K-12 programs.\n\nEyeClick transforms any floor into an interactive learning environment - no screens, no devices, just pure physical play that develops motor skills, literacy and numeracy. Schools see measurable improvements in engagement and physical activity. It fits perfectly alongside your existing furniture, AV, or playground product lines.\n\nSchools are adding EyeClick to sensory rooms, PE spaces, and special education classrooms. The technology creates inclusive play that works for all ability levels, and teachers love that it gets students physically active while learning.\n\nWe distribute exclusively through education dealers like Kurtz Bros. Systems range from $5,000-$30,000+ with strong margins. Would you be open to a conversation about adding interactive projection to your product mix?",
-    "contact": {
-      "name": "Matt Malone",
-      "title": "Executive",
       "email": "",
       "confidence": "",
       "linkedin": "",
@@ -52,101 +27,21 @@
     "website_ok": false
   },
   {
-    "company_name": "Nasco Education",
-    "website": "https://www.nascoeducation.com/",
-    "country": "United States",
-    "vertical": "Education",
-    "description": "National distributor of educational materials, adaptive learning tools, assistive technology, and classroom resources for special education and vocational programs.",
-    "fit_score": 7,
-    "fit_reason": "Nasco Education is an established national distributor serving the education market with adaptive writing tools, assistive technology, and vocational skills resources. Their special education focus and broad product portfolio align well with Kaplan Early Learning's distribution model. They have the infrastructure and school relationships to effectively reach K-12 and special education programs nationwide.",
-    "growth_signals": "None detected in search results.",
-    "evidence_snippets": [
-      "Supports diverse learning needs with adaptive writing tools and assistive technology",
-      "Provides resources for developing vocational skills and special education programs"
-    ],
-    "contact_role": "VP Sales",
-    "email_subject": "Interactive learning technology for your adaptive education portfolio",
-    "email_body": "Nasco Education's commitment to supporting diverse learning needs through adaptive tools and assistive technology shows strong alignment with where special education is heading.\n\nEyeClick transforms any floor into an interactive learning environment - no screens, no devices, just pure physical play that develops motor skills, literacy and numeracy. Schools see measurable improvements in engagement and physical activity. It fits perfectly alongside your existing furniture, AV, or playground product lines.\n\nOur interactive projection systems are being used in special education classrooms, vocational programs, and sensory spaces nationwide. The floor-based games naturally accommodate diverse learners and create opportunities for collaborative play that builds social and motor skills.\n\nWe partner exclusively with education distributors like Nasco. Systems are priced $5,000-$30,000+ with attractive margins for our distribution partners. Would you be interested in exploring how EyeClick fits into your adaptive technology offering?",
-    "contact": {
-      "name": "Hunter Driscoll",
-      "title": "Vice President of Future Business",
-      "email": "",
-      "confidence": "",
-      "linkedin": "https://www.linkedin.com/in/hunterdriscoll",
-      "linkedin_unverified": false
-    },
-    "website_ok": true
-  },
-  {
-    "company_name": "Discount School Supply",
-    "website": "https://www.discountschoolsupply.com/",
-    "country": "United States",
-    "vertical": "Education",
-    "description": "Distributor of early childhood education toys, sensory products, puzzles, blocks, and classroom materials for preschools and daycares.",
-    "fit_score": 6,
-    "fit_reason": "Discount School Supply serves the early childhood education market with sensory products and learning materials. While they have strong category alignment with EyeClick's education vertical, their business model appears more catalog/online-focused rather than field sales representatives, though they may have institutional sales teams.",
-    "growth_signals": "None detected",
-    "evidence_snippets": [
-      "Offers sensory products and early childhood education toys",
-      "Serves preschools and daycares with learning materials"
-    ],
-    "contact_role": "VP Sales",
-    "email_subject": "Interactive floor projection - complement to your sensory line",
-    "email_body": "I see Discount School Supply offers an extensive range of sensory products and early learning materials for preschools and daycares - particularly your construction blocks and sensory learning tools.\n\nEyeClick transforms any floor into an interactive learning environment - no screens, no devices, just pure physical play that develops motor skills, literacy and numeracy. Schools see measurable improvements in engagement and physical activity. It fits perfectly alongside your existing furniture, AV, or playground product lines.\n\nMany early childhood distributors find EyeClick systems ($5,000-$30,000+) generate strong margins while solving a key need: active, screen-free engagement for groups. Would your institutional sales team be interested in learning how EyeClick could expand your sensory and active learning offerings?",
-    "contact": {
-      "name": "Susan Pellegrino",
-      "title": "",
-      "email": "",
-      "confidence": "",
-      "linkedin": "",
-      "linkedin_unverified": false
-    },
-    "website_ok": true
-  },
-  {
-    "company_name": "Soft Play",
-    "website": "https://www.softplay.com",
+    "company_name": "Yommi Play",
+    "website": "https://www.yommiplay.com/",
     "country": "United States",
     "vertical": "Entertainment",
-    "description": "Commercial supplier of custom-designed indoor playground equipment, soft play structures, and interactive elements to FECs, entertainment venues, and play centers.",
-    "fit_score": 8,
-    "fit_reason": "Soft Play is a strong match - they manufacture and distribute indoor playground equipment and interactive elements specifically to FECs and entertainment venues, which are EyeClick's core Entertainment vertical customers. They offer custom design/build solutions and already position themselves as providing complete indoor playground systems, making EyeClick's interactive projection a natural product line extension. Very similar to Zone Leisure Technology in serving the FEC/leisure market.",
-    "growth_signals": "None detected",
-    "evidence_snippets": [
-      "Provides custom design and build solutions for indoor playground equipment",
-      "Offers complete selection of in-stock products ready for installation",
-      "Serves commercial entertainment venues and FECs"
-    ],
-    "contact_role": "VP Sales",
-    "email_subject": "Add interactive floor projection to your FEC equipment portfolio",
-    "email_body": "I noticed Soft Play provides comprehensive indoor playground solutions including interactive elements for FECs and entertainment venues - exactly the market where EyeClick's interactive projection systems are transforming guest experiences.\n\nEyeClick adds a unique, high-margin interactive attraction that drives repeat visits and longer dwell time. FEC operators report 20-35% increase in repeat customers after installing EyeClick zones. With a typical ROI under 12 months, it's one of the strongest upsells you can offer your FEC clients.\n\nOur interactive projection systems project games and activities directly onto floors and walls, creating instant play zones that complement your soft play structures perfectly. Your sales team is already calling on these venues - this gives them a differentiated, high-value product to discuss.\n\nWould you be open to a brief conversation about adding EyeClick to your product lineup?",
-    "contact": {
-      "name": "Jessica Glass",
-      "title": "",
-      "email": "",
-      "confidence": "",
-      "linkedin": "",
-      "linkedin_unverified": false
-    },
-    "website_ok": true
-  },
-  {
-    "company_name": "Go Play Systems",
-    "website": "https://www.goplaysystems.com",
-    "country": "United States",
-    "vertical": "Entertainment",
-    "description": "Commercial playground equipment supplier providing customized indoor and outdoor play solutions for entertainment venues, schools, and community facilities.",
+    "description": "Commercial trampoline systems manufacturer optimizing equipment specifically for family entertainment centers with customizable attraction mixes.",
     "fit_score": 7,
-    "fit_reason": "Go Play Systems supplies commercial playground equipment to entertainment venues and schools, covering two of EyeClick's key verticals. They offer customized solutions and appear to have an established B2B sales operation serving facility operators. While they serve both Entertainment and Education markets, their commercial focus and customization capability make them a solid reseller candidate similar to Zone Leisure Technology's approach.",
+    "fit_reason": "Specialized FEC trampoline equipment manufacturer with focus on customizable attraction solutions for family entertainment centers. Their emphasis on 'attraction mix' suggests they understand the importance of diverse entertainment options - exactly where EyeClick fits. Serves the Entertainment vertical end-customers directly.",
     "growth_signals": "None detected",
     "evidence_snippets": [
-      "Provides premium commercial playground equipment for any space and budget",
-      "Offers customized solutions for commercial facilities",
-      "Serves entertainment venues and educational facilities"
+      "FEC trampoline park equipment optimized for family entertainment centers",
+      "Provides safe, durable, customizable attraction mix solutions"
     ],
-    "contact_role": "VP Sales",
-    "email_subject": "High-margin interactive attraction for your FEC & school clients",
-    "email_body": "I noticed Go Play Systems provides customized commercial playground solutions to entertainment venues and schools - both markets where EyeClick's interactive projection systems are delivering strong ROI for facility operators.\n\nFor your FEC clients: EyeClick adds a unique, high-margin interactive attraction that drives repeat visits and longer dwell time. Operators report 20-35% increase in repeat customers after installing EyeClick zones, with typical ROI under 12 months.\n\nOur interactive projection systems transform any floor or wall into an engaging play zone - no screens, no devices needed. They complement your existing playground equipment perfectly and give your sales team a differentiated technology solution to discuss during facility visits.\n\nThe systems are sold exclusively through reseller partners like Go Play. Would you be interested in a brief conversation about the opportunity?",
+    "contact_role": "CEO",
+    "email_subject": "Expand your FEC attraction mix with interactive floors",
+    "email_body": "I see Yommi Play emphasizes customizable attraction mixes for FECs - that's exactly why dozens of trampoline equipment suppliers now partner with EyeClick to offer interactive projection zones alongside their physical attractions.\n\nEyeClick adds a unique, high-margin interactive attraction that drives repeat visits and longer dwell time. FEC operators report 20-35% increase in repeat customers after installing EyeClick zones. With a typical ROI under 12 months, it's one of the strongest upsells you can offer your FEC clients.\n\nOur systems transform floors and walls into interactive games - perfect for toddler zones, party rooms, or main attraction areas. No screens, no hand-held devices, just engaging physical play that complements your trampoline systems.\n\nWould you be open to exploring how EyeClick could diversify your product portfolio and create new revenue opportunities?",
     "contact": {
       "name": "",
       "title": "",
@@ -158,52 +53,52 @@
     "website_ok": true
   },
   {
-    "company_name": "Indoor Playgrounds International",
-    "website": "https://indoorplaygroundsinternational.com",
-    "country": "United States",
-    "vertical": "Entertainment",
-    "description": "Commercial distributor of indoor playground equipment serving entertainment venues, FECs, and play centers worldwide.",
-    "fit_score": 7,
-    "fit_reason": "Indoor Playgrounds International is a commercial distributor with worldwide reach, selling indoor playground equipment to FECs and entertainment venues - exactly EyeClick's Entertainment end-customers. Their distributor model and international scope align well with EyeClick's reseller sales approach. They appear to have established distribution channels serving the right facilities.",
-    "growth_signals": "None detected",
+    "company_name": "No qualifying companies found",
+    "website": "",
+    "country": "",
+    "vertical": "Seniors",
+    "description": "The search results returned only SaaS/CRM software providers and consultancies, not equipment distributors.",
+    "fit_score": 0,
+    "fit_reason": "All results were software companies (Lansdale Group, SaasWorx, CRM Science, OSP Labs) providing Salesforce CRM solutions or EHR software for senior living operators. None are equipment distributors or resellers with sales forces calling on care facilities. These are technology service providers, not product distributors similar to the gold examples (CDS Boutique, Fu Kang Healthcare, Pro Senectute).",
+    "growth_signals": "Not applicable",
     "evidence_snippets": [
-      "Commercial distributor of indoor playground equipment worldwide",
-      "Serves entertainment venues and play centers",
-      "Established distribution operation with toll-free contact number"
+      "Lansdale Group provides Senior Housing CRM template for Salesforce - software service provider",
+      "SaasWorx offers Salesforce application for senior living communities - SaaS company",
+      "CRM Science provides CRM implementation services using Salesforce - consulting firm",
+      "OSP Labs designs senior living software solutions - software development company"
     ],
-    "contact_role": "VP Sales",
-    "email_subject": "Add interactive projection to your worldwide playground equipment distribution",
-    "email_body": "I see Indoor Playgrounds International distributes playground equipment to entertainment venues worldwide - precisely the market where EyeClick's interactive projection systems are becoming a must-have attraction.\n\nEyeClick adds a unique, high-margin interactive attraction that drives repeat visits and longer dwell time. FEC operators report 20-35% increase in repeat customers after installing EyeClick zones. With a typical ROI under 12 months, it's one of the strongest upsells you can offer your entertainment venue clients.\n\nOur systems project interactive games and activities directly onto floors and walls, creating instant play zones that complement traditional playground structures. Your distribution network is already reaching these facilities - EyeClick gives you a differentiated technology product with exclusive territory protection.\n\nWould you be open to discussing how EyeClick could enhance your product portfolio?",
+    "contact_role": "N/A",
+    "email_subject": "N/A",
+    "email_body": "N/A - No qualifying equipment distributors or resellers found in these search results. All companies identified are software/CRM providers serving senior living operators as end-customers, not B2B equipment distributors with sales forces. A refined search targeting terms like 'senior care equipment distributor', 'nursing home supplies', 'assisted living products supplier', or 'rehabilitation equipment dealer' would likely yield better results for identifying resellers similar to the gold examples provided.",
     "contact": {
-      "name": "Cindy Seide",
-      "title": "VP of Sales and Design",
+      "name": "",
+      "title": "",
       "email": "",
       "confidence": "",
-      "linkedin": "https://www.linkedin.com/in/cindyseide",
+      "linkedin": "",
       "linkedin_unverified": false
     },
-    "website_ok": true
+    "website_ok": false
   },
   {
-    "company_name": "Dreamland Playground",
-    "website": "https://www.dreamlandplayground.com",
-    "country": "China",
-    "vertical": "Entertainment",
-    "description": "Manufacturer providing turnkey indoor playground equipment solutions with custom design and installation services for commercial entertainment facilities worldwide.",
-    "fit_score": 6,
-    "fit_reason": "Dreamland Playground manufactures and provides turnkey solutions for indoor playground equipment to commercial facilities, covering EyeClick's Entertainment vertical end-customers. While primarily a manufacturer, their turnkey solution approach and international reach suggest they have distribution capabilities. However, being China-based and manufacturing-focused makes them a moderate fit compared to specialized distributors.",
-    "growth_signals": "None detected",
+    "company_name": "Edx Education",
+    "website": "https://edxeducation.com",
+    "country": "United States",
+    "vertical": "Education",
+    "description": "Wholesale supplier of educational products exporting to 90+ countries through a distributor network serving early childhood and K-12 programs.",
+    "fit_score": 7,
+    "fit_reason": "Edx Education operates as a wholesale educational products supplier with established distribution channels reaching 90+ countries. Their B2B model serving early childhood and school markets through dealers aligns well with EyeClick's reseller approach. The company's focus on hands-on learning materials and their existing distributor network makes them similar to the gold examples, though they appear to focus more on smaller manipulatives than large equipment.",
+    "growth_signals": "Expansion to 90+ countries indicates ongoing international growth.",
     "evidence_snippets": [
-      "Provides turnkey solution service for custom indoor playground equipment",
-      "Holds ASTM and EN certifications for commercial equipment",
-      "Serves commercial entertainment facilities worldwide"
+      "Major supplier of wholesale educational products exporting to more than 90 countries",
+      "Operates through distributor network serving educational institutions"
     ],
-    "contact_role": "VP Sales",
-    "email_subject": "Interactive projection technology for your turnkey playground solutions",
-    "email_body": "I see Dreamland Playground provides turnkey indoor playground solutions with ASTM and EN certifications - exactly the type of comprehensive approach that pairs well with EyeClick's interactive projection systems.\n\nEyeClick adds a unique, high-margin interactive attraction that drives repeat visits and longer dwell time. FEC operators report 20-35% increase in repeat customers after installing EyeClick zones. With a typical ROI under 12 months, it's one of the strongest additions you can offer in your turnkey solutions.\n\nOur interactive projection systems transform floors and walls into engaging play zones, requiring no screens or devices. They integrate seamlessly into your custom playground designs and give your clients a differentiated technology feature that drives measurable business results.\n\nWould you be open to exploring how EyeClick could enhance your turnkey solution offerings?",
+    "contact_role": "Managing Director",
+    "email_subject": "Screen-free interactive learning solution for your distributor network",
+    "email_body": "Edx Education's reach across 90+ countries through wholesale distribution is impressive - that's exactly the kind of established network that makes EyeClick partnerships successful.\n\nEyeClick transforms any floor into an interactive learning environment - no screens, no devices, just pure physical play that develops motor skills, literacy and numeracy. Schools see measurable improvements in engagement and physical activity. It fits perfectly alongside your existing furniture, AV, or playground product lines.\n\nOur interactive projection systems are sold exclusively through resellers in 50+ countries. Given your wholesale model and international distributor relationships in early childhood education, there may be strong synergy - particularly in markets where you're already calling on preschools and primary schools.\n\nWould it make sense to schedule a brief conversation about how this could work with your existing distributor partnerships?",
     "contact": {
-      "name": "Simona Peng",
-      "title": "Marketing Director of Dreamland Playground Co.,Ltd",
+      "name": "Heather Welch",
+      "title": "General Manager, Edx Education UK",
       "email": "",
       "confidence": "",
       "linkedin": "",
@@ -212,53 +107,160 @@
     "website_ok": true
   },
   {
-    "company_name": "School Outfitters",
-    "website": "https://www.schooloutfitters.com",
-    "country": "USA",
+    "company_name": "Southpaw Enterprises",
+    "website": "https://www.southpaw.com",
+    "country": "United States",
     "vertical": "Education",
-    "description": "National distributor of classroom furniture, AV equipment, and educational technology solutions for K-12 schools and early learning centers.",
-    "fit_score": 8,
-    "fit_reason": "Strong match to gold examples like Kaplan Early Learning and Jonti-Craft - they distribute classroom furniture, AV equipment, and educational technology directly to schools. They have an established catalog and sales force calling on K-12 schools and early education facilities. Their AV equipment category (headphones, PA systems, laptop carts) shows they already sell tech/equipment to the exact end-customers EyeClick targets.",
-    "growth_signals": "None detected",
+    "description": "Distributor of sensory integration, occupational therapy and special education equipment for schools and therapy clinics.",
+    "fit_score": 9,
+    "fit_reason": "Southpaw is one of the gold standard examples provided - they specialize in sensory integration and special education equipment, serving schools and therapy clinics with a dedicated sales force. Their focus on motor skill development, sensory engagement, and therapeutic play makes them an ideal fit for EyeClick's no-device, physically interactive projection systems. Perfect alignment with both the product value proposition and target end-customers.",
+    "growth_signals": "None detected in current search results.",
     "evidence_snippets": [
-      "Sells AV equipment for schools including headphones, PA systems, and laptop carts",
-      "Distributes classroom technology and furniture to enhance learning environments"
+      "Distributor of sensory integration and occupational therapy equipment",
+      "Serves schools, special education programs and therapy clinics"
     ],
     "contact_role": "VP Sales",
-    "email_subject": "Interactive floor projection for your K-12 AV catalog",
-    "email_body": "I noticed School Outfitters carries an impressive range of AV equipment and classroom technology for K-12 schools - from interactive displays to laptop carts. I wanted to introduce a product that several similar distributors have added to complement those lines.\n\nEyeClick transforms any classroom floor into an interactive learning environment through projection - no screens, no hand-held devices, just pure physical play that develops motor skills, literacy and numeracy. Schools report measurable improvements in student engagement and physical activity, especially in PE, special education, and early childhood settings.\n\nIt fits perfectly alongside your existing AV and furniture product lines, with systems ranging from $5,000-$30,000. Your sales team is already calling on exactly the schools asking for this type of active learning solution.\n\nWould you be open to a brief call to explore how EyeClick could strengthen your classroom technology offering?",
+    "email_subject": "Interactive projection system for sensory integration programs",
+    "email_body": "Southpaw's specialization in sensory integration and special education equipment makes you an ideal fit for what we're seeing in the market - schools and therapy clinics are actively seeking engaging, movement-based solutions that don't require screens or hand-held devices.\n\nEyeClick transforms any floor into an interactive learning environment - no screens, no devices, just pure physical play that develops motor skills, literacy and numeracy. Schools see measurable improvements in engagement and physical activity. It fits perfectly alongside your existing furniture, AV, or playground product lines.\n\nOur interactive floor and wall projection systems ($5K-$30K) are particularly powerful in special education and OT settings where physical engagement and sensory feedback are critical. Several sensory equipment distributors report this has become one of their strongest offerings for autism programs and sensory rooms.\n\nCould we schedule 15 minutes to explore fit with your special education customer base?",
     "contact": {
-      "name": "Rich Bova",
-      "title": "Chief Executive Officer at School Outfitters",
+      "name": "Alex Moore",
+      "title": "President",
       "email": "",
       "confidence": "",
-      "linkedin": "https://www.linkedin.com/in/rich-bova-26a599398",
+      "linkedin": "https://www.linkedin.com/in/alex-moore-20b4a79",
       "linkedin_unverified": false
     },
     "website_ok": true
   },
   {
-    "company_name": "S3 Technologies",
-    "website": "https://www.mys3tech.com",
-    "country": "USA",
-    "vertical": "Education",
-    "description": "Regional AV integrator and equipment supplier specializing in school audiovisual installations including projectors, smart displays, and interactive whiteboards in Northeast Ohio.",
-    "fit_score": 7,
-    "fit_reason": "Strong regional presence in Northeast Ohio as a school AV installer and equipment supplier. They actively sell and install interactive whiteboards, projectors, and smart displays to K-12 schools - direct alignment with EyeClick's education vertical. Similar to gold examples in that they have a sales force calling on schools and distribute educational technology equipment, though more regionally focused than national distributors.",
-    "growth_signals": "None detected",
+    "company_name": "Angel Playground",
+    "website": "https://www.angelplayground.com/",
+    "country": "United States",
+    "vertical": "Entertainment",
+    "description": "Commercial supplier of indoor play structures, trampoline parks, ninja warrior courses, and interactive games for family entertainment centers and leisure venues.",
+    "fit_score": 9,
+    "fit_reason": "Angel Playground is an exceptional fit - they already sell interactive games alongside physical attractions to trampoline parks and FECs, exactly EyeClick's target customers. Their product range specifically includes interactive games, suggesting they understand the value proposition and already have the sales conversations where EyeClick would fit naturally. This mirrors Zone Leisure Technology's positioning as a leisure technology supplier.",
+    "growth_signals": "Diverse product portfolio including interactive games indicates active expansion into technology-enhanced attractions beyond traditional playground equipment.",
     "evidence_snippets": [
-      "One of Northeast Ohio's top school audiovisual installers",
-      "Installs projectors, smart displays, interactive whiteboards, and livestreaming equipment in schools"
+      "Supplies trampoline parks, ninja warrior courses, and FECs with equipment",
+      "Already offers interactive games as part of product portfolio",
+      "Provides turnkey solutions including play structures and entertainment attractions"
     ],
-    "contact_role": "VP Sales",
-    "email_subject": "Interactive projection to complement your school AV installations",
-    "email_body": "S3 Technologies has built a strong reputation installing interactive whiteboards, projectors, and smart displays across Northeast Ohio schools. I wanted to share a complementary technology that several regional AV integrators have added to their school portfolios.\n\nEyeClick's interactive floor projection system creates active learning zones in gyms, cafeterias, libraries, and special education rooms - spaces where traditional wall-mounted displays don't fit. Schools see measurable improvements in physical activity and engagement, particularly for early elementary and special needs students.\n\nWith systems from $5,000-$30,000, it's a natural upsell when your team is already on-site for AV projects. Many integrators report that EyeClick opens conversations in departments (PE, special ed, early childhood) that weren't previously buying AV equipment.\n\nWould you be interested in a brief conversation about adding interactive floor projection to your school technology offerings?",
+    "contact_role": "CEO",
+    "email_subject": "Premium interactive projection to complement your FEC technology portfolio",
+    "email_body": "I noticed Angel Playground already includes interactive games in your product portfolio for trampoline parks and FECs - you clearly understand the demand for technology-enhanced attractions that drive repeat visits.\n\nEyeClick adds a unique, high-margin interactive attraction that drives repeat visits and longer dwell time. FEC operators report 20-35% increase in repeat customers after installing EyeClick zones. With a typical ROI under 12 months, it's one of the strongest upsells you can offer your FEC and trampoline park clients.\n\nOur interactive projection systems transform entire floors and walls into gaming surfaces - significantly larger play areas than traditional interactive games. With price points from $5k-$30k+, it fits perfectly between your ninja warrior courses and trampoline installations.\n\nGiven you're already having these conversations with FEC operators, would you be interested in exploring how EyeClick could strengthen your interactive offering and increase project values?",
     "contact": {
-      "name": "Ben Mroczek",
-      "title": "President & CEO",
+      "name": "\u6768\u79cb\u534e",
+      "title": "",
       "email": "",
       "confidence": "",
-      "linkedin": "https://www.linkedin.com/in/ben-mroczek-071b808",
+      "linkedin": "",
+      "linkedin_unverified": false
+    },
+    "website_ok": true
+  },
+  {
+    "company_name": "AlzStore",
+    "website": "https://www.alzstore.com/",
+    "country": "United States",
+    "vertical": "Seniors",
+    "description": "Specialized supplier of comfort and safety products designed for those with Alzheimer's, dementia, stroke, and memory impairments.",
+    "fit_score": 7,
+    "fit_reason": "AlzStore is the self-described number one source for Alzheimer's and dementia products, indicating strong market presence in this niche. They focus on activities, safety, and comfort products for memory care, matching the gold examples' cognitive stimulation focus. Their specialization in Alzheimer's care products suggests they have established relationships with memory care facilities.",
+    "growth_signals": "None detected",
+    "evidence_snippets": [
+      "Claims to be #1 source for Alzheimer's and dementia products",
+      "Specializes in activities, safety, and comfort products for memory impairments",
+      "Focuses on products designed specifically for Alzheimer's, dementia, and stroke patients"
+    ],
+    "contact_role": "VP Sales",
+    "email_subject": "Interactive engagement tool for your Alzheimer's care clients",
+    "email_body": "As the leading source for Alzheimer's and dementia products, AlzStore clearly understands what memory care facilities need to keep residents engaged and active.\n\nEyeClick's interactive projection system is purpose-built for senior engagement - it projects games and activities directly onto floors and walls, requiring no hand-held devices, making it ideal for residents with limited mobility or cognitive decline. Facilities report measurable improvements in social engagement and motor activity. It's a natural complement to your existing senior care product portfolio.\n\nOur Alzheimer's care resellers find that EyeClick fills a unique gap in their portfolio - a high-value technology solution that drives both engagement outcomes and strong margins.\n\nCould we schedule a brief call to explore how EyeClick might fit within your Alzheimer's and dementia care product range?",
+    "contact": {
+      "name": "B. Brittany Barnet",
+      "title": "Principal",
+      "email": "",
+      "confidence": "",
+      "linkedin": "",
+      "linkedin_unverified": false
+    },
+    "website_ok": true
+  },
+  {
+    "company_name": "Performance Health (Sammons Preston)",
+    "website": "https://www.performancehealth.com/occupational-therapy",
+    "country": "United States",
+    "vertical": "Seniors",
+    "description": "Distributor of occupational therapy equipment, aids to daily living, and exercise therapy products for healthcare facilities and rehabilitation centers.",
+    "fit_score": 8,
+    "fit_reason": "Performance Health operates as a dedicated B2B distributor of occupational therapy equipment and assistive products, serving the exact end-customer base EyeClick targets - rehabilitation centers, senior care facilities, and OT clinics. Their focus on cognitive engagement and functional therapy products mirrors the business model of gold examples like CDS Boutique and Fu Kang Healthcare. They have an established distribution network and sales force calling on senior care and rehab facilities nationwide.",
+    "growth_signals": "None detected",
+    "evidence_snippets": [
+      "Offers innovative products to assist patients in all stages of life including aids to daily living and exercise therapy",
+      "Sammons Preston brand dedicated to occupational therapy solutions across healthcare settings"
+    ],
+    "contact_role": "VP Sales",
+    "email_subject": "Interactive engagement solution for your OT and senior care clients",
+    "email_body": "I noticed Performance Health's strong portfolio of occupational therapy equipment and cognitive engagement tools for senior care facilities and rehabilitation centers.\n\nEyeClick's interactive projection system is purpose-built for senior engagement - it projects games and activities directly onto floors and walls, requiring no hand-held devices, making it ideal for residents with limited mobility or cognitive decline. Facilities report measurable improvements in social engagement and motor activity.\n\nGiven your established relationships with OT clinics, rehab centers, and senior care facilities, EyeClick would be a natural complement to your Sammons Preston line. Our systems typically generate strong margins and recurring content revenue.\n\nWould you be open to a brief call to explore how EyeClick could expand your cognitive stimulation and activity therapy offerings?",
+    "contact": {
+      "name": "",
+      "title": "",
+      "email": "",
+      "confidence": "",
+      "linkedin": "",
+      "linkedin_unverified": false
+    },
+    "website_ok": true
+  },
+  {
+    "company_name": "Rehabmart",
+    "website": "https://www.rehabmart.com",
+    "country": "United States",
+    "vertical": "Seniors",
+    "description": "Online medical equipment and supply company owned and operated by occupational and physical therapists, serving healthcare facilities and rehabilitation providers.",
+    "fit_score": 6,
+    "fit_reason": "Rehabmart is operated by occupational and physical therapists and distributes medical equipment to rehab and senior care settings. While they have a strong online presence, their professional clinical ownership suggests B2B relationships with facilities. They serve similar end-customers to the gold examples but appear more catalog-focused than field-sales driven, which slightly reduces fit compared to traditional distributors.",
+    "growth_signals": "None detected",
+    "evidence_snippets": [
+      "Owned and operated by occupational and physical therapists",
+      "Specializes in discount medical equipment and supplies for rehabilitation settings"
+    ],
+    "contact_role": "CEO",
+    "email_subject": "Add interactive cognitive engagement to your rehab equipment portfolio",
+    "email_body": "As a company founded and operated by OT and PT professionals, Rehabmart clearly understands what rehabilitation and senior care facilities need for patient engagement and therapy.\n\nEyeClick's interactive projection system is purpose-built for senior engagement - it projects games and activities directly onto floors and walls, requiring no hand-held devices, making it ideal for residents with limited mobility or cognitive decline. Facilities report measurable improvements in social engagement and motor activity. It's a natural complement to your existing rehabilitation and senior care product portfolio.\n\nOur systems offer strong margins and appeal to the same OT directors and activity coordinators already purchasing from your catalog.\n\nWould you be interested in exploring how EyeClick could enhance your cognitive stimulation and therapeutic activity offerings?",
+    "contact": {
+      "name": "Hulet Smith",
+      "title": "CEO",
+      "email": "",
+      "confidence": "",
+      "linkedin": "https://www.linkedin.com/in/huletsmith",
+      "linkedin_unverified": false
+    },
+    "website_ok": false
+  },
+  {
+    "company_name": "STS Education",
+    "website": "https://stsed.com/",
+    "country": "United States",
+    "vertical": "Education",
+    "description": "Comprehensive distributor of edtech solutions and products for K-12 schools, serving educators and administrators.",
+    "fit_score": 8,
+    "fit_reason": "STS Education operates as a full-service edtech distributor with a curated suite of solutions for K-12 schools, closely matching the Kaplan Early Learning model. They focus on empowering educators with technology products and have an established distribution network serving schools. Their positioning as a comprehensive solution provider makes them an ideal complement for EyeClick's interactive learning systems.",
+    "growth_signals": "None detected",
+    "evidence_snippets": [
+      "Offers comprehensive, expertly curated suite of edtech solutions for K-12",
+      "Focus on empowering educators and administrators while improving student outcomes"
+    ],
+    "contact_role": "CEO",
+    "email_subject": "Add interactive floor technology to your K-12 edtech portfolio",
+    "email_body": "I noticed STS Education has built an impressive curated portfolio of edtech solutions that empower K-12 educators - exactly the kind of comprehensive approach schools are looking for today.\n\nEyeClick transforms any floor into an interactive learning environment - no screens, no devices, just pure physical play that develops motor skills, literacy and numeracy. Schools see measurable improvements in engagement and physical activity. It fits perfectly alongside your existing edtech product lines.\n\nWhat makes this particularly relevant for STS: elementary and special-education programmes are actively seeking solutions that get students moving while learning, and EyeClick delivers both at $5,000-$30,000 per system with strong margins for distributors.\n\nWould you be open to a brief conversation about adding interactive projection to your portfolio? I can share case studies from schools seeing 40%+ increases in student engagement.",
+    "contact_person": "",
+    "contact": {
+      "name": "Marc N.",
+      "title": "CEO",
+      "email": "",
+      "confidence": "",
+      "linkedin": "https://www.linkedin.com/in/marc-netka-sts",
       "linkedin_unverified": false
     },
     "website_ok": true
