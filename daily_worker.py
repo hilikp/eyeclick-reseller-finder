@@ -15,8 +15,9 @@ Run locally (for testing):
     API keys read from env vars first, fall back to secrets.toml if not found.
 """
 
-import os, sys, pathlib, tomllib, uuid, time, itertools, subprocess, json
+import os, sys, pathlib, tomllib, uuid, time, itertools, subprocess, json, base64
 from datetime import datetime
+from email.mime.text import MIMEText
 
 os.chdir(pathlib.Path(__file__).parent)
 
@@ -137,6 +138,91 @@ def save_daily_run(initial_count: int, followup_count: int):
 
     log(f"✓ Daily run saved to {run_file}")
 
+def create_gmail_draft(companies: list, today: str):
+    """Create a Gmail draft summarising today's prospects. Skips gracefully if not configured."""
+    creds_path = pathlib.Path("credentials.json")
+    if not creds_path.exists():
+        log("WARNING: credentials.json not found - skipping Gmail draft creation")
+        return
+
+    try:
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build
+    except ImportError:
+        log("WARNING: google-api-python-client not installed - skipping Gmail draft")
+        return
+
+    SCOPES = ["https://www.googleapis.com/auth/gmail.compose"]
+    token_path = pathlib.Path("token.json")
+
+    creds = None
+    if token_path.exists():
+        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+                with open(token_path, "w") as f:
+                    f.write(creds.to_json())
+            except Exception as e:
+                log(f"WARNING: Failed to refresh Gmail token: {e} - skipping draft")
+                return
+        else:
+            log("WARNING: token.json missing or invalid - run setup_gmail_auth.py first, skipping draft")
+            return
+
+    gmail_user = get_secret("GMAIL_USER", "me")
+
+    by_vertical = {"Seniors": [], "Education": [], "Entertainment": []}
+    for c in companies:
+        v = c.get("vertical", "")
+        if v in by_vertical:
+            by_vertical[v].append(c)
+
+    total = len(companies)
+    with_email = sum(1 for c in companies if c.get("contact", {}).get("email"))
+    linkedin_only = total - with_email
+
+    lines = ["Good morning!", "", "Today's reseller prospects are ready:", ""]
+    for vertical, comps in by_vertical.items():
+        lines.append(f"{vertical.upper()} ({len(comps)})")
+        for c in comps:
+            name = c.get("company_name", "")
+            country = c.get("country", "")
+            score = c.get("score", "?")
+            linkedin = (c.get("contact") or {}).get("linkedin_url") or "not found"
+            lines.append(f"- {name} ({country}) - Score {score}/10")
+            lines.append(f"  LinkedIn: {linkedin}")
+        lines.append("")
+
+    lines += [
+        "---",
+        f"Total: {total} prospects - {with_email} with email - {linkedin_only} LinkedIn only",
+        "Open app: https://eyeclick-reseller-finder-l6f3ifv45q8tah2lec9dlg.streamlit.app/?auth=f2830e999c5f4d13dba7",
+    ]
+
+    body = "\n".join(lines)
+    subject = f"EyeClick Daily Batch · {today} · {total} prospects ready"
+
+    msg = MIMEText(body)
+    msg["to"] = gmail_user
+    msg["from"] = gmail_user
+    msg["subject"] = subject
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+
+    try:
+        service = build("gmail", "v1", credentials=creds)
+        draft = service.users().drafts().create(
+            userId="me",
+            body={"message": {"raw": raw}},
+        ).execute()
+        log(f"✓ Gmail draft created (ID {draft['id']})")
+    except Exception as e:
+        log(f"WARNING: Failed to create Gmail draft: {e}")
+
+
 def run():
     log("=== EyeClick Daily Worker starting ===")
 
@@ -230,15 +316,19 @@ def run():
     log(f"✅ Done! {len(final)} prospects saved to {output_file}")
     add_to_seen_log(final)
 
-    return True
-
-    # ── Phase 6: Save daily run and push to GitHub ─────────────────────────
+    # Phase 6: Save daily run summary and push to GitHub
     log("Phase 6: Saving daily run and pushing to GitHub…")
-    save_daily_run(initial_count, followup_count)
+    save_daily_run(len(final), 0)
     if git_push():
         log("✓ Successfully pushed to GitHub")
     else:
         log("⚠ Failed to push to GitHub — check logs above")
+
+    # Phase 7: Create Gmail draft
+    log("Phase 7: Creating Gmail draft…")
+    create_gmail_draft(final, today)
+
+    return True
 
 if __name__ == "__main__":
     success = run()
