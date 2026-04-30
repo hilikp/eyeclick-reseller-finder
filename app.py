@@ -1041,7 +1041,7 @@ if final:
     tabs   = st.tabs(["📋 All Results", "👴 Seniors", "🏫 Education", "🎯 Entertainment", "📬 Outreach Queue"])
 
     with tabs[0]:
-        for i, r in enumerate(final, 1):
+      for i, r in enumerate([r for r in final if isinstance(r, dict)], 1):
             result_card(r, i, key_prefix="all")
 
     for tab, vertical in zip(tabs[1:4], ["Seniors","Education","Entertainment"]):
