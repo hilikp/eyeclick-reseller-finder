@@ -1010,6 +1010,7 @@ if search_clicked:
 # DISPLAY RESULTS (from session state — survives reruns)
 # ================================================================
 final = st.session_state.get("last_results")
+final = [r for r in final if isinstance(r, dict)] if final else []
 if final:
     today        = st.session_state.get("last_date", datetime.now().strftime("%Y-%m-%d"))
     region_label = st.session_state.get("last_region","")
