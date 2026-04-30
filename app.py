@@ -1027,8 +1027,8 @@ if final:
     for r in final:
         if isinstance(r, dict):
             groups.get(r.get("vertical",""), []).append(r)
-    avg_score = round(sum(r.get("fit_score",0) for r in final) / max(len(final),1), 1)
-    with_email = sum(1 for r in final if r.get("contact",{}).get("email"))
+    avg_score = round(sum(r.get("fit_score",0) for r in final if isinstance(r, dict)) / max(len(final),1), 1)
+    with_email = sum(1 for r in final if isinstance(r, dict) and r.get("contact",{}).get("email"))
     s1, s2, s3, s4, s5, s6 = st.columns(6)
     s1.metric("Total Found", len(final))
     s2.metric("👴 Seniors",       len(groups["Seniors"]))
