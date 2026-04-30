@@ -832,5 +832,17 @@
     "company_name": "Amusement Supply Company",
     "vertical": "Entertainment",
     "date_found": "2026-04-30"
+  },
+  {
+    "website": "https://www.bettaplay.com",
+    "company_name": "Bettaplay / Pokiddo",
+    "vertical": "Entertainment",
+    "date_found": "2026-04-30"
+  },
+  {
+    "website": "https://www.pverify.com",
+    "company_name": "pVerify",
+    "vertical": "Seniors",
+    "date_found": "2026-04-30"
   }
 ]
