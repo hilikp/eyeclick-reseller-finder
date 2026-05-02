@@ -321,30 +321,45 @@ def load_seen_companies() -> list:
         pass
     return []
 
+# In-memory cache shared across all Streamlit sessions/reconnects.
+# Populated on first use from the JSON file, then kept up-to-date in memory.
+_seen_cache: list = []
+_seen_cache_loaded: bool = False
+
+def _get_seen_cache() -> list:
+    global _seen_cache, _seen_cache_loaded
+    if not _seen_cache_loaded:
+        _seen_cache = load_seen_companies()
+        _seen_cache_loaded = True
+    return _seen_cache
+
 def is_recently_seen(website: str, days: int) -> bool:
     if not website or days == 0:
         return False
     cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-    for e in load_seen_companies():
+    for e in _get_seen_cache():
         if (e.get("website","").lower() == website.lower()
                 and e.get("date_found","") >= cutoff):
             return True
     return False
 
 def add_to_seen_log(companies: list):
-    existing       = load_seen_companies()
+    global _seen_cache
+    existing       = _get_seen_cache()
     existing_sites = {e.get("website","").lower() for e in existing}
     today          = datetime.now().strftime("%Y-%m-%d")
     for c in companies:
         site = c.get("website","").lower()
         if site and site not in existing_sites:
-            existing.append({
+            entry = {
                 "website"      : c.get("website",""),
                 "company_name" : c.get("company_name",""),
                 "vertical"     : c.get("vertical",""),
                 "date_found"   : today,
-            })
+            }
+            existing.append(entry)
             existing_sites.add(site)
+    _seen_cache = existing
     try:
         with open(SEEN_COMPANIES_FILE, "w") as f:
             json.dump(existing, f, indent=2)

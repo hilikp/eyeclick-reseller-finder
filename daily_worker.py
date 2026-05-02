@@ -287,7 +287,7 @@ def run():
         companies = analyse_companies(client, results, v, query, region_label, blocked)
         new = [c for c in companies
                if c.get("website","") not in seen_sites
-               and not is_recently_seen(c.get("website",""), 30)
+               and not is_recently_seen(c.get("website",""), 60)
                and not is_blocked(c.get("country",""), v, blocked)
                and not is_flagged_wrong_industry(c.get("website",""))]
 

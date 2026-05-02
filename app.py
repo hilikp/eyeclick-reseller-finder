@@ -305,7 +305,7 @@ with st.sidebar:
     st.caption("Skip companies already found within:")
     dedup_days = st.selectbox(
         "dedup", [7, 14, 30, 60, 90, 0],
-        index=2,
+        index=3,
         format_func=lambda x: f"{x} days" if x > 0 else "Off (show all)",
         label_visibility="collapsed",
         key="dedup_days",
