@@ -868,5 +868,23 @@
     "company_name": "Sanford Health Equip",
     "vertical": "Seniors",
     "date_found": "2026-05-02"
+  },
+  {
+    "website": "https://www.nascoeducation.com",
+    "company_name": "Nasco Education",
+    "vertical": "Education",
+    "date_found": "2026-05-02"
+  },
+  {
+    "website": "https://enablingdevices.com",
+    "company_name": "Enabling Devices",
+    "vertical": "Education",
+    "date_found": "2026-05-02"
+  },
+  {
+    "website": "https://www.kurtzbros.com",
+    "company_name": "Kurtz Bros",
+    "vertical": "Education",
+    "date_found": "2026-05-02"
   }
 ]
