@@ -886,5 +886,65 @@
     "company_name": "Kurtz Bros",
     "vertical": "Education",
     "date_found": "2026-05-02"
+  },
+  {
+    "website": "https://www.schoolspecialty.com/special-needs",
+    "company_name": "School Specialty (Special Needs Division)",
+    "vertical": "Education",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://ninescapeland.com",
+    "company_name": "NinescapeLand",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://www.visualav.com",
+    "company_name": "Visual AV",
+    "vertical": "Education",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://www.educatorsav.com",
+    "company_name": "Educators AV",
+    "vertical": "Education",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://rides4u.com/",
+    "company_name": "Rides 4-U",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://www.edtech.com/companies",
+    "company_name": "Pearson Education",
+    "vertical": "Education",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://turnkeyattractions.com/",
+    "company_name": "Turnkey Attractions",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://www.spectrio.com/industries/senior-living/",
+    "company_name": "Spectrio",
+    "vertical": "Seniors",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://meteoreducation.com/",
+    "company_name": "Meteor Education",
+    "vertical": "Education",
+    "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://www.demco.com/",
+    "company_name": "Demco",
+    "vertical": "Education",
+    "date_found": "2026-05-03"
   }
 ]
