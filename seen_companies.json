@@ -946,5 +946,65 @@
     "company_name": "Demco",
     "vertical": "Education",
     "date_found": "2026-05-03"
+  },
+  {
+    "website": "https://playworld.com/",
+    "company_name": "Playworld",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://marshallind.com",
+    "company_name": "Marshall Industrial",
+    "vertical": "Education",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.performancehealth.com",
+    "company_name": "Performance Health (Sammons Preston)",
+    "vertical": "Seniors",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.rehab-store.com",
+    "company_name": "Rehab Store",
+    "vertical": "Seniors",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.prohealthcareproducts.com",
+    "company_name": "ProHealthcareProducts.com",
+    "vertical": "Seniors",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.southpaw.com/",
+    "company_name": "Southpaw Enterprises",
+    "vertical": "Education",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.encoredp.com/",
+    "company_name": "Encore Data Products",
+    "vertical": "Education",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.paragoninc.com/",
+    "company_name": "Paragon Furniture",
+    "vertical": "Education",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.techedproducts.com/",
+    "company_name": "TechEd Products",
+    "vertical": "Education",
+    "date_found": "2026-05-04"
+  },
+  {
+    "website": "https://www.wetop.com/",
+    "company_name": "WETOP",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-04"
   }
 ]
