@@ -1174,5 +1174,65 @@
     "company_name": "Smith System",
     "vertical": "Education",
     "date_found": "2026-05-05"
+  },
+  {
+    "website": "https://www.rhinouk.com/",
+    "company_name": "Rhino UK",
+    "vertical": "Seniors",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://www.todaysclassroom.com",
+    "company_name": "Today's Classroom",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://zippyav.com",
+    "company_name": "Zippy AV",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://www.cambiumlearning.com/",
+    "company_name": "Cambium Learning Group",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://www.voyagersopris.com/",
+    "company_name": "Voyager Sopris Learning",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://www.lexialearning.com/",
+    "company_name": "Lexia Learning",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://www.hmhco.com/",
+    "company_name": "HMH (Houghton Mifflin Harcourt)",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://www.lcsliving.com/",
+    "company_name": "LCS Group",
+    "vertical": "Seniors",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://createspaces.com/",
+    "company_name": "Create Spaces",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
+  },
+  {
+    "website": "https://saffefurniture.com/",
+    "company_name": "SAFFE Furniture",
+    "vertical": "Education",
+    "date_found": "2026-05-06"
   }
 ]
