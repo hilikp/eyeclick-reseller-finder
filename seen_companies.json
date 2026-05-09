@@ -1462,5 +1462,59 @@
     "company_name": "ExerPlay",
     "vertical": "Education",
     "date_found": "2026-05-08"
+  },
+  {
+    "website": "https://www.shopbecker.com/",
+    "company_name": "Becker's School Supplies",
+    "vertical": "Education",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://www.todaysclassroom.com/",
+    "company_name": "Today's Classroom",
+    "vertical": "Education",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://www.btetechnologies.com/",
+    "company_name": "BTE Technologies",
+    "vertical": "Seniors",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://zspace.com/",
+    "company_name": "zSpace",
+    "vertical": "Education",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://www.spectrio.com/",
+    "company_name": "Spectrio",
+    "vertical": "Seniors",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://www.encoredata.com/",
+    "company_name": "Encore Data Products",
+    "vertical": "Education",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://www.ascom.com/",
+    "company_name": "Ascom",
+    "vertical": "Seniors",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://playgroundsetc.com/",
+    "company_name": "Playgrounds Etc",
+    "vertical": "Education",
+    "date_found": "2026-05-09"
+  },
+  {
+    "website": "https://www.fordav.com",
+    "company_name": "Ford AV",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-09"
   }
 ]
