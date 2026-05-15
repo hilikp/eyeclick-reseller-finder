@@ -2044,5 +2044,53 @@
     "company_name": "WhiteWater (via resortX listing)",
     "vertical": "Entertainment",
     "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://www.mckesson.com/",
+    "company_name": "McKesson Medical-Surgical",
+    "vertical": "Seniors",
+    "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://www.stryker.com/us/en/index.html",
+    "company_name": "Stryker",
+    "vertical": "Seniors",
+    "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://striveav.com",
+    "company_name": "Strive AV",
+    "vertical": "Education",
+    "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://www.continyou.care/",
+    "company_name": "Continyou Care",
+    "vertical": "Seniors",
+    "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://www.electrosonic.com/",
+    "company_name": "Electrosonic",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://friedtechnology.com/",
+    "company_name": "friEdTechnology",
+    "vertical": "Education",
+    "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://www.integraequipment.com/",
+    "company_name": "Integra Healthcare Equipment",
+    "vertical": "Seniors",
+    "date_found": "2026-05-15"
+  },
+  {
+    "website": "https://www.wetop-tech.com/",
+    "company_name": "WeTop Interactive LED Floors",
+    "vertical": "Entertainment",
+    "date_found": "2026-05-15"
   }
 ]
